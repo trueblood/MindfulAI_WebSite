@@ -8,7 +8,13 @@ app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.YETI, dbc.icons.FONT_AWESOME],
 )
-#app = Dash(external_stylesheets=[dbc.themes.YETI])
+
+# List of emotions and corresponding image files (example filenames)
+emotions = [
+    {"name": "Happy", "image": "images/happy/happy_00b597a317f73e5832275a0a5f9aa8250f1a4450bd55ac20387f2c9d.jpg"},
+    {"name": "Sad", "image": "images/sad/sad_01b1763812bc6d9932343b0122aefff73ed1a0cce2f252f8b3a80546.jpg"},
+    {"name": "Angry", "image": "images/angry/angry_0b4fb5f008ae748b2bfe8fc4d35af1d37ab56120acbbd135be98fdb5.jpg"}
+]
 
 #  make dataframe from  spreadsheet:
 df = pd.read_csv("assets/historic.csv")
@@ -431,6 +437,60 @@ results_card = dbc.Card(
     className="mt-4",
 )
 
+# emotion_cards = html.Div(
+#     dbc.Row(
+#         [
+#             dbc.Col(
+#                 dbc.Card(
+#                     [
+#                         dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
+#                         dbc.CardBody([
+#                             html.Hr(),
+#                             html.H4(f"{emotion['name']} Card", className="card-title center-text"),
+#                             html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
+#                         ])
+#                     ],
+#                     id=f"{emotion['name']}",
+#                     style={"width": "18rem", "margin": "auto"},
+#                     className="clickable-card",
+#                     n_clicks=0
+#                 ),
+#                 md=4
+#             ) for emotion in emotions
+#         ],
+#         justify="around"
+#     ),
+#     style={'margin-top': '20px'}
+# )
+emotion_cards =html.Div(
+    dbc.Row(
+        [
+            dbc.Col(
+                dbc.Button(  # Use Button to wrap the Card for click functionality
+                    dbc.Card(
+                        [
+                            dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
+                            dbc.CardBody([
+                                html.Hr(),
+                                html.H4(f"{emotion['name']} Card", className="card-title center-text"),
+                                html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
+                            ])
+                        ],
+                      #  style={"width": "18rem", "margin": "auto"}
+                    ),
+                    id=f"{emotion['name']}",  # Assign ID to Button instead of Card
+                    #style={"padding": "0", "border": "none", "background": "none"},  # Make Button invisible
+                    style={"width": "18rem", "margin": "auto"},
+                    className="clickable-card",
+                    n_clicks=0
+                ),
+                md=4
+            ) for emotion in emotions
+        ],
+        justify="around"
+    ),
+    style={'margin-top': '20px'}
+)
 
 data_source_card = dbc.Card(
     [
@@ -565,18 +625,6 @@ def worst(dff, asset):
 ===========================================================================
 Main Layout
 """
-
-
-
-
-
-# List of emotions and corresponding image files (example filenames)
-emotions = [
-    {"name": "Happy", "image": "images/happy/happy_00b597a317f73e5832275a0a5f9aa8250f1a4450bd55ac20387f2c9d.jpg"},
-    {"name": "Sad", "image": "images/sad/sad_01b1763812bc6d9932343b0122aefff73ed1a0cce2f252f8b3a80546.jpg"},
-    {"name": "Angry", "image": "images/angry/angry_0b4fb5f008ae748b2bfe8fc4d35af1d37ab56120acbbd135be98fdb5.jpg"}
-]
-
 app.layout = dbc.Container(
     [
         dbc.Row(
@@ -587,25 +635,17 @@ app.layout = dbc.Container(
                 ),
             )
         ),
-            html.Div(
         dbc.Row(
-            [dbc.Col(
-                dbc.Card(
-                    [
-                        dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),  # Added padding around image
-                        dbc.CardBody([
-                            html.Hr(),
-                            html.H4(f"{emotion['name']} Card", className="card-title center-text"),
-                            html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
-                        ])
-                    ], style={"width": "18rem", "margin": "auto"}  # Ensures card is centered
-                ), 
-                md=4
-            ) for emotion in emotions],
-            justify="around"  # Centers the row content
-        ), style={'margin-top': '20px'}  # Adds spacing from the navbar
-    ),
-      html.Hr(),
+            dbc.Col(
+            html.Div([
+                html.H1("Emotion Cards"),
+                emotion_cards
+            ]),
+            ),
+            align="center"  # Add align="center" to center the content of the row
+        ),
+
+        html.Hr(),
         dbc.Row(
             [
                 dbc.Col(tabs, width=12, lg=5, className="mt-4 border"),
@@ -618,8 +658,7 @@ app.layout = dbc.Container(
                         html.H6(datasource_text, className="my-2"),
                     ],
                     width=12,
-                    lg=7,
-                    className="pt-4",
+                    className="col-12 pt-4",
                 ),
             ],
             className="ms-1",
@@ -634,7 +673,23 @@ app.layout = dbc.Container(
 ==========================================================================
 Callbacks
 """
-
+@app.callback(
+    [
+        Output(f"{emotion['name']}", "style") for emotion in emotions
+    ],
+    [
+        Input(f"{emotion['name']}", "n_clicks") for emotion in emotions
+    ],
+    prevent_initial_call=True
+)
+def highlight_active_card(*args):
+    triggered_id = callback_context.triggered[0]["prop_id"].split(".")[0]
+    return [
+        {"width": "18rem", "margin": "auto", "filter": "grayscale(100%)"}
+        if f"{emotion['name']}" != triggered_id else
+        {"width": "18rem", "margin": "auto"}
+        for emotion in emotions
+    ]
 
 @app.callback(
     Output("allocation_pie_chart", "figure"),

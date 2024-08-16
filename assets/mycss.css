@@ -14,3 +14,12 @@ blockquote {
     margin-bottom: 2rem;
     margin-left: 0rem;
 }
+
+.clickable-card {
+  cursor: pointer;
+  transition: transform .2s; /* Animation */
+}
+
+.clickable-card:hover {
+  transform: scale(1.05); /* Slightly enlarge on hover */
+}
