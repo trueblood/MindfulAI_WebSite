@@ -14,6 +14,14 @@ import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+import pandas as pd
+import numpy as np
+import datetime
+import plotly.express as px
+import dash
+from dash import dcc, html
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output
 
 # Sample Data Preparation
 np.random.seed(42)
@@ -390,34 +398,34 @@ time_period_data = [
 
 mindfulness_feedback_scale = [
     {
-        "label": "Exercise did not apply to my situation - The exercise didn’t fit my current emotional context",
-        "rating": 0,
-        "description": "The exercise wasn’t relevant to what I was experiencing."
-    },
-    {
-        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions",
-        "rating": 1,
+        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions (Great Financial Crisis scenario)",
+        "start_yr": 1,
         "description": "The exercise did not provide relief or made the situation worse."
     },
     {
-        "label": "2: Slightly Helpful - Some minor impact but overall felt irrelevant",
-        "rating": 2,
+        "label": "2: Slightly Helpful - Some minor impact but overall felt irrelevant (Dotcom Bubble scenario)",
+        "start_yr": 2,
         "description": "The exercise had a small positive effect, but was mostly unhelpful."
     },
     {
-        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective",
-        "rating": 3,
+        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective (1970s Energy Crisis scenario)",
+        "start_yr": 3,
         "description": "The exercise provided moderate relief but wasn’t fully sufficient."
     },
     {
-        "label": "4: Helpful - Exercise significantly improved emotional state",
-        "rating": 4,
+        "label": "4: Helpful - Exercise significantly improved emotional state (Great Depression scenario)",
+        "start_yr": 4,
         "description": "The exercise was effective in helping manage emotions with good results."
     },
     {
-        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress",
-        "rating": 5,
+        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress (General Long-Term Improvement)",
+        "start_yr": 5,
         "description": "The exercise was highly effective and perfectly aligned with my needs."
+    },
+    {
+        "label": "Exercise did not apply to my situation - The exercise didn’t fit my current emotional context",
+        "start_yr": 0,
+        "description": "The exercise wasn’t relevant to what I was experiencing."
     }
 ]
 
@@ -994,24 +1002,30 @@ def update_card_content(*args):
         ) for emotion in emotions
     ]
 
-
-
-
-
-
 # Callback to update the graph based on selected radio item
 @app.callback(
     Output("live_graph", "figure"),
     Input("time_period", "value")
 )
 def update_graph(selected_period):
-    # Filter data or modify based on the selected radio value
-    filtered_data = data.copy().iloc[::(selected_period + 1)]  # Example of filtering, modify as needed
-
-    filtered_data['Time_Ago'] = [(f"{(datetime.datetime.now() - ts).seconds // 60} minutes ago") for ts in filtered_data['Timestamp']]
-
+    # Get the current feedback score from the selected period's "start_yr"
+    feedback_score = mindfulness_feedback_scale[selected_period]["start_yr"]
+    
+    # Add a new point to the dataframe with "0 minutes ago"
+    new_point = pd.DataFrame({
+        'Timestamp': [datetime.datetime.now()],
+        'Feedback_Score': [feedback_score],
+        'Emotion': ["New Feedback"],
+        'Location': ["User Input"],
+        'Time_Ago': ["0 minutes ago"]
+    })
+    
+    updated_data = pd.concat([data, new_point], ignore_index=True)
+    
+    updated_data['Time_Ago'] = [(f"{(datetime.datetime.now() - ts).seconds // 60} minutes ago") for ts in updated_data['Timestamp']]
+    
     # Plot with Plotly
-    fig = px.line(filtered_data, x='Time_Ago', y='Feedback_Score', markers=True, title='Live Data Stream Graph - Feedback Scores Over Time',
+    fig = px.line(updated_data, x='Time_Ago', y='Feedback_Score', markers=True, title='Live Data Stream Graph - Feedback Scores Over Time',
                   hover_name='Time_Ago',
                   hover_data=['Emotion', 'Location'])
     fig.update_layout(
