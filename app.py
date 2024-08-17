@@ -403,6 +403,32 @@ slider_card = dbc.Card(
     className="mt-4",
 )
 
+# feedback_leaderboard_table = dbc.Card(
+#     [
+#         html.H4("Feedback Leaderboard", className="card-title text-center mt-3"),
+#         dash_table.DataTable(
+#             id='leaderboard_table',
+#             columns=[{"name": col, "id": col} for col in df_leaderboard.columns],
+#             data=df_leaderboard.to_dict('records'),
+#             style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
+#             style_cell={'textAlign': 'left'},
+#             style_data_conditional=[
+#                 {
+#                     'if': {'filter_query': '{Source} = "user_feedback_for_that_user"'},
+#                     'backgroundColor': 'rgb(220, 220, 220)'
+#                 },
+#                 {
+#                     'if': {'filter_query': '{Source} = "recommended_table"'},
+#                     'backgroundColor': 'rgb(245, 245, 245)'
+#                 }
+#             ],
+#             page_size=10
+#         ),
+#     ],
+#     body=True,
+#     className="mt-4",
+# )
+
 feedback_leaderboard_table = dbc.Card(
     [
         html.H4("Feedback Leaderboard", className="card-title text-center mt-3"),
@@ -410,8 +436,26 @@ feedback_leaderboard_table = dbc.Card(
             id='leaderboard_table',
             columns=[{"name": col, "id": col} for col in df_leaderboard.columns],
             data=df_leaderboard.to_dict('records'),
-            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
-            style_cell={'textAlign': 'left'},
+            style_header={
+                'backgroundColor': 'rgb(255, 255, 255)',
+                'color': 'black',
+                'border': '1px solid black',
+                'textAlign': 'center',  # Center-align the header text
+                'fontSize': '14px',  # Slightly larger font size for headers
+            },
+            style_cell={
+                'textAlign': 'center',  # Center-align the text
+                'padding': '5px',  # For a compressed look
+                'whiteSpace': 'normal',
+                'height': 'auto',
+                'overflow': 'hidden',
+                'fontSize': '12px',  # Reduce the font size
+            },
+            style_table={
+                'height': '300px',  # Adjust the height to trigger scroll
+                'overflowY': 'auto',
+                'border': '1px solid black',
+            },
             style_data_conditional=[
                 {
                     'if': {'filter_query': '{Source} = "user_feedback_for_that_user"'},
@@ -427,7 +471,13 @@ feedback_leaderboard_table = dbc.Card(
     ],
     body=True,
     className="mt-4",
+    style={
+        'backgroundColor': 'white',
+        'border': '1px solid black',
+        'color': 'black',
+    }
 )
+
 
 time_period_data = [
     {
@@ -738,7 +788,7 @@ tabs = dbc.Tabs(
     [
         dbc.Tab(learn_card, tab_id="tab1", label="Learn"),
         dbc.Tab(
-            [asset_allocation_card, time_period_card, input_groups],
+            [asset_allocation_card, time_period_card, input_groups, feedback_leaderboard_table],
             tab_id="tab-2",
             label="Play",
             className="pb-4",
@@ -937,12 +987,6 @@ app.layout = dbc.Container(
                     lg=7,
                     className="pt-4",
                 ),
-            ],
-            className="ms-1",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(feedback_leaderboard_table)
             ],
             className="ms-1",
         ),
