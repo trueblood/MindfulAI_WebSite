@@ -1193,6 +1193,34 @@ def create_chart(_):
 
     return fig
 
+# Callback to update the leaderboard based on feedback rating selection
+@app.callback(
+    Output('leaderboard_table', 'data'),
+    Input('time_period', 'value')
+)
+def update_leaderboard_table(rating):
+    global df_leaderboard
+    if rating == 0:
+        # No update if the rating is 0
+        return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
+    
+    # Adjust the Q-value based on the rating
+    for i in range(len(df_leaderboard)):
+        if rating >= 3:
+            # Increase Q-value slightly if the rating is 3 or above
+            df_leaderboard.at[i, 'Q-Value'] += 0.02
+        elif rating > 0:
+            # Decrease Q-value slightly if the rating is below 3
+            df_leaderboard.at[i, 'Q-Value'] -= 0.02
+    
+    # Ensure Q-values stay within valid bounds (0.0 to 1.0)
+    df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].clip(0.0, 1.0)
+    # Format the Q-Value column to show values up to the thousandths place
+    df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].round(3)
+    
+    # Sort by Q-Value in descending order to display the highest Q-value first
+    return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
+
 
 # Remember to mention
 """
