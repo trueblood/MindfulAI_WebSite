@@ -44,9 +44,9 @@ app = Dash(
 
 # List of emotions and corresponding image files (example filenames)
 emotions = [
-    {"name": "Happy", "image": "images/happy/happy_00b597a317f73e5832275a0a5f9aa8250f1a4450bd55ac20387f2c9d.jpg"},
-    {"name": "Sad", "image": "images/sad/sad_01b1763812bc6d9932343b0122aefff73ed1a0cce2f252f8b3a80546.jpg"},
-    {"name": "Angry", "image": "images/angry/angry_0b4fb5f008ae748b2bfe8fc4d35af1d37ab56120acbbd135be98fdb5.jpg"}
+    {"name": "Happy", "image": "images/happy/happy_00b597a317f73e5832275a0a5f9aa8250f1a4450bd55ac20387f2c9d.jpg", "location": "Commercial"},
+    {"name": "Sad", "image": "images/sad/sad_01b1763812bc6d9932343b0122aefff73ed1a0cce2f252f8b3a80546.jpg", "location": "Residential"},
+    {"name": "Angry", "image": "images/angry/angry_0b4fb5f008ae748b2bfe8fc4d35af1d37ab56120acbbd135be98fdb5.jpg", "location": "Commercial"}
 ]
 
 # Sample data for the table
@@ -696,6 +696,18 @@ emotion_cards = html.Div(
                                     #     "white-space": "normal",  # Allow wrapping to multiple lines
                                     #     "margin": "0"  # Optional: adjust margins for better spacing
                                     # }
+                                ),
+                                html.P(
+                                    [
+                                        f"Location: {emotion['location']}"  # Second line
+                                    ],
+                                    className="card-text center-text",
+                                    # style={
+                                    #     "font-size": "14px",  # Adjust font size as needed
+                                    #     "text-align": "center", 
+                                    #     "white-space": "normal",  # Allow wrapping to multiple lines
+                                    #     "margin": "0"  # Optional: adjust margins for better spacing
+                                    # }
                                 )
                             ])
                         ],
@@ -1123,33 +1135,33 @@ def update_time_period(start_yr, period_number):
     prevent_initial_call=True
 )
 def update_card_content(*args):
-    ctx = callback_context
+    ctx = dash.callback_context
     if not ctx.triggered:
-        return [no_update for _ in emotions]
+        return [no_update] * len(emotions)  # Ensures the list is the same length as the number of emotions
     
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print(f"Triggered ID: {triggered_id}")
     
-    button_id = triggered_id  # Extract emotion name from button ID
-
-    updated_cards = []
-    for emotion in emotions:
-        card_content = dbc.Card(
+    # Using list comprehension to construct updated card contents
+    updated_cards = [
+        dbc.Card(
             [
                 dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
                 dbc.CardBody([
                     html.Hr(),
                     html.P(
-                        f"This is a pic of {triggered_id.upper()} emotion." if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.",
+                        "This is a pic of {} emotion.".format(triggered_id.upper()) if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.",
+                        className="card-text center-text"
+                    ),
+                    html.P(
+                        "Location: {}".format(emotion['location']),
                         className="card-text center-text"
                     )
                 ])
             ],
         #    style={"width": "18rem", "margin": "auto", "padding": "0", "border": "none", "background": "none"}
-        )
-
-        updated_cards.append(card_content)
-
+        ) for emotion in emotions
+    ]
+    
     return updated_cards
 
     # return [
