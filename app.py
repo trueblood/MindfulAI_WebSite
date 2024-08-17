@@ -1008,10 +1008,22 @@ def update_card_content(*args):
     Input("time_period", "value")
 )
 def update_graph(selected_period):
+    # Check if the callback is triggered by user interaction or page load
+    ctx = callback_context
+    if not ctx.triggered or ctx.triggered[0]['prop_id'].split('.')[0] != 'time_period':
+        # Return an empty initial graph if not triggered by user interaction
+        fig = px.line()
+        return fig
+
     # Get the current feedback score from the selected period's "start_yr"
     feedback_score = mindfulness_feedback_scale[selected_period]["start_yr"]
-    
-    # Add a new point to the dataframe with "0 minutes ago"
+
+    # Remove the existing "0 minutes ago" point if it exists
+    filtered_data = data.copy()
+    filtered_data['Time_Ago'] = [(f"{(datetime.datetime.now() - ts).seconds // 60} minutes ago") for ts in filtered_data['Timestamp']]
+    filtered_data = filtered_data[filtered_data['Time_Ago'] != "0 minutes ago"]
+
+    # Add the new point with "0 minutes ago"
     new_point = pd.DataFrame({
         'Timestamp': [datetime.datetime.now()],
         'Feedback_Score': [feedback_score],
@@ -1019,11 +1031,9 @@ def update_graph(selected_period):
         'Location': ["User Input"],
         'Time_Ago': ["0 minutes ago"]
     })
-    
-    updated_data = pd.concat([data, new_point], ignore_index=True)
-    
-    updated_data['Time_Ago'] = [(f"{(datetime.datetime.now() - ts).seconds // 60} minutes ago") for ts in updated_data['Timestamp']]
-    
+
+    updated_data = pd.concat([filtered_data, new_point], ignore_index=True)
+
     # Plot with Plotly
     fig = px.line(updated_data, x='Time_Ago', y='Feedback_Score', markers=True, title='Live Data Stream Graph - Feedback Scores Over Time',
                   hover_name='Time_Ago',
