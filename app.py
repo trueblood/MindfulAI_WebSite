@@ -99,7 +99,15 @@ asset_allocation_text = dcc.Markdown(
 
 learn_text = dcc.Markdown(
     """
-Using synchronous training for your project, where you're combining a user recommendation table (off-policy) and semantic vector search (on-policy), is a strategic choice, especially when aiming for consistency and stability in your learning updates
+Using synchronous training for your project, where you're combining a user recommendation table (off-policy) and semantic vector search (on-policy), is a strategic choice, especially when aiming for consistency and stability in your learning updates. Make this talk about the top and bottom graphs and how they relate to tidb serverless and vector and how our RL technology utilizes it
+
+
+
+
+
+
+
+
 
 
     Past performance certainly does not determine future results, but you can still
@@ -418,7 +426,7 @@ mindfulness_feedback_scale = [
         "description": "The exercise was effective in helping manage emotions with good results."
     },
     {
-        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress (General Long-Term Improvement)",
+        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress",
         "start_yr": 5,
         "description": "The exercise was highly effective and perfectly aligned with my needs."
     },
@@ -434,7 +442,7 @@ mindfulness_feedback_scale = [
 time_period_card = dbc.Card(
     [
         html.H4(
-            "Mindfulness Exercise: Select a time period to invest",
+            "Suggested Mindfulness Exercise Feedback Rating",
             className="card-title",
         ),
         dbc.RadioItems(
