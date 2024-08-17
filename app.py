@@ -1139,17 +1139,23 @@ data_training_time = generate_data_training_time_data()
 
 @app.callback(
     Output("training_time_bar_chart", "figure"),
-    Input("training_time_bar_chart", "id")  # Triggers on app load
+    Input("time_period", "value")
 )
-def create_chart(_):
-    data = data_training_time
-
+def update_chart_on_feedback(value):
+    # Modify the last entry (episode) in the data based on the selected feedback rating
+    index = -1  # Index for the last iteration
+    data_training_time['cpu_usage'][index] = random.randint(50, 90)
+    data_training_time['ram_usage'][index] = random.randint(16, 32)
+    data_training_time['fetch_time'][index] = random.randint(10, 50)
+    data_training_time['data_volume'][index] = random.randint(8000, 12000)
+    data_training_time['vector_search_records'][index] = random.randint(5000, 7000)
+    
     fig = go.Figure()
 
     # Data Volume and Vector Search Records with tooltips including additional info
     fig.add_trace(go.Bar(
-        x=data['iteration'],
-        y=data['data_volume'],
+        x=data_training_time['iteration'],
+        y=data_training_time['data_volume'],
         name='Data Volume (records)',
         marker_color='green',
         hovertemplate=(
@@ -1160,12 +1166,12 @@ def create_chart(_):
             'Fetch Time: %{customdata[2]} ms<br>' +
             '<extra></extra>'
         ),
-        customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
+        customdata=list(zip(data_training_time['cpu_usage'], data_training_time['ram_usage'], data_training_time['fetch_time']))
     ))
 
     fig.add_trace(go.Bar(
-        x=data['iteration'],
-        y=data['vector_search_records'],
+        x=data_training_time['iteration'],
+        y=data_training_time['vector_search_records'],
         name='Vector Search Records (records)',
         marker_color='orange',
         hovertemplate=(
@@ -1176,22 +1182,78 @@ def create_chart(_):
             'Fetch Time: %{customdata[2]} ms<br>' +
             '<extra></extra>'
         ),
-        customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
+        customdata=list(zip(data_training_time['cpu_usage'], data_training_time['ram_usage'], data_training_time['fetch_time']))
     ))
-
-    # Vary fetch time across grouped bars
-    fetch_time_adjusted = [data['fetch_time'][i] + random.randint(-3, 3) for i in range(len(data['fetch_time']))]
 
     fig.update_layout(
         barmode='group',
-        
-        title='Q-Learning Data Usage During Decision Processing',
-        xaxis_title='Agent Episode',
-        yaxis_title='Data Records Used',
-        legend_title='Metrics'
+        title='TiDB Retrieval & Agent Navigation Times',
+        xaxis_title='Agent Episode Iterations',
+        yaxis_title='Metrics',
+        legend_title='Metrics',
+        xaxis=dict(
+            tickmode='array',
+            tickvals=list(range(1, 11)),  # Explicitly set tick values to show all iterations
+            ticktext=[str(i) for i in range(1, 11)]  # Label them with episode numbers 1-10
+        )
     )
 
     return fig
+# @app.callback(
+#     Output("training_time_bar_chart", "figure"),
+#     Input("training_time_bar_chart", "id")  # Triggers on app load
+# )
+# def create_chart(_):
+#     data = data_training_time
+
+#     fig = go.Figure()
+
+#     # Data Volume and Vector Search Records with tooltips including additional info
+#     fig.add_trace(go.Bar(
+#         x=data['iteration'],
+#         y=data['data_volume'],
+#         name='Data Volume (records)',
+#         marker_color='green',
+#         hovertemplate=(
+#             'Iteration: %{x}<br>' +
+#             'Data Volume: %{y} records<br>' +
+#             'CPU Usage: %{customdata[0]}%<br>' +
+#             'RAM Usage: %{customdata[1]} GB<br>' +
+#             'Fetch Time: %{customdata[2]} ms<br>' +
+#             '<extra></extra>'
+#         ),
+#         customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
+#     ))
+
+#     fig.add_trace(go.Bar(
+#         x=data['iteration'],
+#         y=data['vector_search_records'],
+#         name='Vector Search Records (records)',
+#         marker_color='orange',
+#         hovertemplate=(
+#             'Iteration: %{x}<br>' +
+#             'Vector Search Records: %{y} records<br>' +
+#             'CPU Usage: %{customdata[0]}%<br>' +
+#             'RAM Usage: %{customdata[1]} GB<br>' +
+#             'Fetch Time: %{customdata[2]} ms<br>' +
+#             '<extra></extra>'
+#         ),
+#         customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
+#     ))
+
+#     # Vary fetch time across grouped bars
+#     fetch_time_adjusted = [data['fetch_time'][i] + random.randint(-3, 3) for i in range(len(data['fetch_time']))]
+
+#     fig.update_layout(
+#         barmode='group',
+        
+#         title='Q-Learning Data Usage During Decision Processing',
+#         xaxis_title='Agent Episode',
+#         yaxis_title='Data Records Used',
+#         legend_title='Metrics'
+#     )
+
+#     return fig
 
 # Callback to update the leaderboard based on feedback rating selection
 @app.callback(
