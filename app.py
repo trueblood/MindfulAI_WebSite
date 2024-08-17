@@ -852,6 +852,7 @@ app.layout = dbc.Container(
                 dbc.Col(
                     [
                         dcc.Graph(id="live_graph"),
+                        dcc.Graph(id='training_time_bar_chart'),
                         dcc.Graph(id="allocation_pie_chart", className="mb-2"),
                         dcc.Graph(id="returns_chart", className="pb-4"),
                         html.Hr(),
@@ -1072,6 +1073,76 @@ def update_graph(selected_period):
         yaxis=dict(showgrid=True, gridwidth=0.5, gridcolor='#CCCCCC')
     )
     return fig
+
+def generate_data_training_time_data():
+    data = {
+        'iteration': list(range(1, 11)),
+        'cpu_usage': [random.randint(50, 90) for _ in range(10)],  # CPU usage in percentage
+        'ram_usage': [random.randint(16, 32) for _ in range(10)],  # RAM usage in GB
+        'fetch_time': [random.randint(10, 50) for _ in range(10)],  # Fetch time in ms
+        'data_volume': [random.randint(8000, 12000) for _ in range(10)],  # Data volume in records
+        'vector_search_records': [random.randint(5000, 7000) for _ in range(10)]  # Vector search subset
+    }
+    return data
+
+
+data_training_time = generate_data_training_time_data()
+
+@app.callback(
+    Output("training_time_bar_chart", "figure"),
+    Input("training_time_bar_chart", "id")  # Triggers on app load
+)
+def create_chart(_):
+    data = data_training_time
+
+    fig = go.Figure()
+
+    # Data Volume and Vector Search Records with tooltips including additional info
+    fig.add_trace(go.Bar(
+        x=data['iteration'],
+        y=data['data_volume'],
+        name='Data Volume (records)',
+        marker_color='green',
+        hovertemplate=(
+            'Iteration: %{x}<br>' +
+            'Data Volume: %{y} records<br>' +
+            'CPU Usage: %{customdata[0]}%<br>' +
+            'RAM Usage: %{customdata[1]} GB<br>' +
+            'Fetch Time: %{customdata[2]} ms<br>' +
+            '<extra></extra>'
+        ),
+        customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
+    ))
+
+    fig.add_trace(go.Bar(
+        x=data['iteration'],
+        y=data['vector_search_records'],
+        name='Vector Search Records (records)',
+        marker_color='orange',
+        hovertemplate=(
+            'Iteration: %{x}<br>' +
+            'Vector Search Records: %{y} records<br>' +
+            'CPU Usage: %{customdata[0]}%<br>' +
+            'RAM Usage: %{customdata[1]} GB<br>' +
+            'Fetch Time: %{customdata[2]} ms<br>' +
+            '<extra></extra>'
+        ),
+        customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
+    ))
+
+    # Vary fetch time across grouped bars
+    fetch_time_adjusted = [data['fetch_time'][i] + random.randint(-3, 3) for i in range(len(data['fetch_time']))]
+
+    fig.update_layout(
+        barmode='group',
+        title='TiDB Retrieval & Agent Navigation Times',
+        xaxis_title='Training Iteration',
+        yaxis_title='Metrics',
+        legend_title='Metrics'
+    )
+
+    return fig
+
 
 # Remember to mention
 """
