@@ -667,7 +667,7 @@ tabs = dbc.Tabs(
     [
         dbc.Tab(learn_card, tab_id="tab1", label="Learn"),
         dbc.Tab(
-            [asset_allocation_text, time_period_card, slider_card, input_groups],
+            [asset_allocation_text, time_period_card, input_groups],
             tab_id="tab-2",
             label="Play",
             className="pb-4",
@@ -853,11 +853,11 @@ app.layout = dbc.Container(
                     [
                         dcc.Graph(id="live_graph"),
                         dcc.Graph(id='training_time_bar_chart'),
-                        dcc.Graph(id="allocation_pie_chart", className="mb-2"),
-                        dcc.Graph(id="returns_chart", className="pb-4"),
+                      #  dcc.Graph(id="allocation_pie_chart", className="mb-2"),
+                       # dcc.Graph(id="returns_chart", className="pb-4"),
                         html.Hr(),
                         html.Div(id="summary_table"),
-                        html.H6(datasource_text, className="my-2")
+                     #   html.H6(datasource_text, className="my-2")
                     ],
                     width=12,
                     lg=7,
@@ -893,44 +893,44 @@ def highlight_active_card(*args):
         for emotion in emotions
     ]
 
-@app.callback(
-    Output("allocation_pie_chart", "figure"),
-    Input("stock_bond", "value"),
-    Input("cash", "value"),
-)
-def update_pie(stocks, cash):
-    bonds = 100 - stocks - cash
-    slider_input = [cash, bonds, stocks]
+# @app.callback(
+#     Output("allocation_pie_chart", "figure"),
+#     Input("stock_bond", "value"),
+#     Input("cash", "value"),
+# )
+# def update_pie(stocks, cash):
+#     bonds = 100 - stocks - cash
+#     slider_input = [cash, bonds, stocks]
 
-    if stocks >= 70:
-        investment_style = "Aggressive"
-    elif stocks <= 30:
-        investment_style = "Conservative"
-    else:
-        investment_style = "Moderate"
-    figure = make_pie(slider_input, investment_style + " Asset Allocation")
-    return figure
+#     if stocks >= 70:
+#         investment_style = "Aggressive"
+#     elif stocks <= 30:
+#         investment_style = "Conservative"
+#     else:
+#         investment_style = "Moderate"
+#     figure = make_pie(slider_input, investment_style + " Asset Allocation")
+#     return figure
 
 
-@app.callback(
-    Output("stock_bond", "max"),
-    Output("stock_bond", "marks"),
-    Output("stock_bond", "value"),
-    Input("cash", "value"),
-    State("stock_bond", "value"),
-)
-def update_stock_slider(cash, initial_stock_value):
-    max_slider = 100 - int(cash)
-    stocks = min(max_slider, initial_stock_value)
+# @app.callback(
+#     Output("stock_bond", "max"),
+#     Output("stock_bond", "marks"),
+#     Output("stock_bond", "value"),
+#     Input("cash", "value"),
+#     State("stock_bond", "value"),
+# )
+# def update_stock_slider(cash, initial_stock_value):
+#     max_slider = 100 - int(cash)
+#     stocks = min(max_slider, initial_stock_value)
 
-    # formats the slider scale
-    if max_slider > 50:
-        marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 10)}
-    elif max_slider <= 15:
-        marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 1)}
-    else:
-        marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 5)}
-    return max_slider, marks_slider, stocks
+#     # formats the slider scale
+#     if max_slider > 50:
+#         marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 10)}
+#     elif max_slider <= 15:
+#         marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 1)}
+#     else:
+#         marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 5)}
+#     return max_slider, marks_slider, stocks
 
 
 @app.callback(
@@ -956,48 +956,48 @@ def update_time_period(planning_time, start_yr, period_number):
     return planning_time, start_yr, period_number
 
 
-@app.callback(
-    Output("total_returns", "data"),
-    Output("returns_chart", "figure"),
-    Output("summary_table", "children"),
-    Output("ending_amount", "value"),
-    Output("cagr", "value"),
-    Input("stock_bond", "value"),
-    Input("cash", "value"),
-    Input("starting_amount", "value"),
-    Input("planning_time", "value"),
-    Input("start_yr", "value"),
-)
-def update_totals(stocks, cash, start_bal, planning_time, start_yr):
-    # set defaults for invalid inputs
-    start_bal = 10 if start_bal is None else start_bal
-    planning_time = 1 if planning_time is None else planning_time
-    start_yr = MIN_YR if start_yr is None else int(start_yr)
+# @app.callback(
+#     Output("total_returns", "data"),
+#     Output("returns_chart", "figure"),
+#     Output("summary_table", "children"),
+#     Output("ending_amount", "value"),
+#     Output("cagr", "value"),
+#     Input("stock_bond", "value"),
+#     Input("cash", "value"),
+#     Input("starting_amount", "value"),
+#     Input("planning_time", "value"),
+#     Input("start_yr", "value"),
+# )
+# def update_totals(stocks, cash, start_bal, planning_time, start_yr):
+#     # set defaults for invalid inputs
+#     start_bal = 10 if start_bal is None else start_bal
+#     planning_time = 1 if planning_time is None else planning_time
+#     start_yr = MIN_YR if start_yr is None else int(start_yr)
 
-    # calculate valid planning time start yr
-    max_time = MAX_YR + 1 - start_yr
-    planning_time = min(max_time, planning_time)
-    if start_yr + planning_time > MAX_YR:
-        start_yr = min(df.iloc[-planning_time, 0], MAX_YR)  # 0 is Year column
+#     # calculate valid planning time start yr
+#     max_time = MAX_YR + 1 - start_yr
+#     planning_time = min(max_time, planning_time)
+#     if start_yr + planning_time > MAX_YR:
+#         start_yr = min(df.iloc[-planning_time, 0], MAX_YR)  # 0 is Year column
 
-    # create investment returns dataframe
-    dff = backtest(stocks, cash, start_bal, planning_time, start_yr)
+#     # create investment returns dataframe
+#     dff = backtest(stocks, cash, start_bal, planning_time, start_yr)
 
-    # create data for DataTable
-    data = dff.to_dict("records")
+#     # create data for DataTable
+#     data = dff.to_dict("records")
 
-    # create the line chart
-    fig = make_line_chart(dff)
+#     # create the line chart
+#     fig = make_line_chart(dff)
 
-    summary_table = make_summary_table(dff)
+#     summary_table = make_summary_table(dff)
 
-    # format ending balance
-    ending_amount = f"${dff['Total'].iloc[-1]:0,.0f}"
+#     # format ending balance
+#     ending_amount = f"${dff['Total'].iloc[-1]:0,.0f}"
 
-    # calcluate cagr
-    ending_cagr = cagr(dff["Total"])
+#     # calcluate cagr
+#     ending_cagr = cagr(dff["Total"])
 
-    return data, fig, summary_table, ending_amount, ending_cagr
+#     return data, fig, summary_table, ending_amount, ending_cagr
 
 @app.callback(
     [Output(f"{emotion['name']}", "children") for emotion in emotions],
