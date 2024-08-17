@@ -186,44 +186,44 @@ annual_returns_pct_table = dash_table.DataTable(
 )
 
 
-def make_summary_table(dff):
-    """Make html table to show cagr and  best and worst periods"""
+# def make_summary_table(dff):
+#     """Make html table to show cagr and  best and worst periods"""
 
-    table_class = "h5 text-body text-nowrap"
-    cash = html.Span(
-        [html.I(className="fa fa-money-bill-alt"), " Cash"], className=table_class
-    )
-    bonds = html.Span(
-        [html.I(className="fa fa-handshake"), " Bonds"], className=table_class
-    )
-    stocks = html.Span(
-        [html.I(className="fa fa-industry"), " Stocks"], className=table_class
-    )
-    inflation = html.Span(
-        [html.I(className="fa fa-ambulance"), " Inflation"], className=table_class
-    )
+#     table_class = "h5 text-body text-nowrap"
+#     cash = html.Span(
+#         [html.I(className="fa fa-money-bill-alt"), " Cash"], className=table_class
+#     )
+#     bonds = html.Span(
+#         [html.I(className="fa fa-handshake"), " Bonds"], className=table_class
+#     )
+#     stocks = html.Span(
+#         [html.I(className="fa fa-industry"), " Stocks"], className=table_class
+#     )
+#     inflation = html.Span(
+#         [html.I(className="fa fa-ambulance"), " Inflation"], className=table_class
+#     )
 
-    start_yr = dff["Year"].iat[0]
-    end_yr = dff["Year"].iat[-1]
+#     start_yr = dff["Year"].iat[0]
+#     end_yr = dff["Year"].iat[-1]
 
-    df_table = pd.DataFrame(
-        {
-            "": [cash, bonds, stocks, inflation],
-            f"Rate of Return (CAGR) from {start_yr} to {end_yr}": [
-                cagr(dff["all_cash"]),
-                cagr(dff["all_bonds"]),
-                cagr(dff["all_stocks"]),
-                cagr(dff["inflation_only"]),
-            ],
-            f"Worst 1 Year Return": [
-                worst(dff, "3-mon T.Bill"),
-                worst(dff, "10yr T.Bond"),
-                worst(dff, "S&P 500"),
-                "",
-            ],
-        }
-    )
-    return dbc.Table.from_dataframe(df_table, bordered=True, hover=True)
+#     df_table = pd.DataFrame(
+#         {
+#             "": [cash, bonds, stocks, inflation],
+#             f"Rate of Return (CAGR) from {start_yr} to {end_yr}": [
+#                 cagr(dff["all_cash"]),
+#                 cagr(dff["all_bonds"]),
+#                 cagr(dff["all_stocks"]),
+#                 cagr(dff["inflation_only"]),
+#             ],
+#             f"Worst 1 Year Return": [
+#                 worst(dff, "3-mon T.Bill"),
+#                 worst(dff, "10yr T.Bond"),
+#                 worst(dff, "S&P 500"),
+#                 "",
+#             ],
+#         }
+#     )
+#     return dbc.Table.from_dataframe(df_table, bordered=True, hover=True)
 
 
 """
@@ -524,8 +524,9 @@ rate_of_return = dbc.InputGroup(
 )
 
 input_groups = html.Div(
-    [start_amount, start_year, number_of_years, end_amount, rate_of_return],
+    [start_year],
     className="mt-4 p-4",
+    style={"display": "none"} 
 )
 
 
@@ -934,26 +935,20 @@ def highlight_active_card(*args):
 
 
 @app.callback(
-    Output("planning_time", "value"),
     Output("start_yr", "value"),
     Output("time_period", "value"),
-    Input("planning_time", "value"),
     Input("start_yr", "value"),
     Input("time_period", "value"),
 )
-def update_time_period(planning_time, start_yr, period_number):
+def update_time_period(start_yr, period_number):
     """syncs inputs and selected time periods"""
     ctx = callback_context
     input_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
-    if input_id == "time_period":
-        planning_time = time_period_data[period_number]["planning_time"]
-        start_yr = time_period_data[period_number]["start_yr"]
 
-    if input_id in ["planning_time", "start_yr"]:
-        period_number = None
+    start_yr = 2007
 
-    return planning_time, start_yr, period_number
+    return start_yr, period_number
 
 
 # @app.callback(
