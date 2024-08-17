@@ -146,9 +146,7 @@ footer = html.Div(
     dcc.Markdown(
         """
          This information is intended solely as general information for educational
-        and entertainment purposes only and is not a substitute for professional advice and
-        services from qualified financial services providers familiar with your financial
-        situation.    
+        and entertainment purposes only.
         """
     ),
     className="p-2 mt-5 bg-primary text-white small",
@@ -672,8 +670,8 @@ tabs = dbc.Tabs(
             tab_id="tab-2",
             label="Play",
             className="pb-4",
-        ),
-        dbc.Tab([results_card, data_source_card], tab_id="tab-3", label="Results"),
+        )
+      #  dbc.Tab([results_card, data_source_card], tab_id="tab-3", label="Results"),
     ],
     id="tabs",
     active_tab="tab-2",
@@ -1054,7 +1052,7 @@ def update_graph(selected_period):
     updated_data = pd.concat([filtered_data, new_point], ignore_index=True)
 
     # Plot with Plotly
-    fig = px.line(updated_data, x='Time_Ago', y='Feedback_Score', markers=True, title='Live Data Stream Graph - Feedback Scores Over Time',
+    fig = px.line(updated_data, x='Time_Ago', y='Feedback_Score', markers=True, title='TiDB Integrated Live Data Stream Graph - Feedback Scores Over Time',
                   hover_name='Time_Ago',
                   hover_data=['Emotion', 'Location'])
     fig.update_layout(
@@ -1130,9 +1128,10 @@ def create_chart(_):
 
     fig.update_layout(
         barmode='group',
-        title='TiDB Retrieval & Agent Navigation Times',
-        xaxis_title='Training Iteration',
-        yaxis_title='Metrics',
+        
+        title='Q-Learning Data Usage During Decision Processing',
+        xaxis_title='Agent Episode',
+        yaxis_title='Data Records Used',
         legend_title='Metrics'
     )
 
