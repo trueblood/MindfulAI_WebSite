@@ -110,14 +110,7 @@ datasource_text = dcc.Markdown(
 
 asset_allocation_text = dcc.Markdown(
     """
-> **Asset allocation** is one of the main factors that drive portfolio risk and returns.   Play with the app and see for yourself!
-
-> Change the allocation to cash, bonds and stocks on the sliders and see how your portfolio performs over time in the graph.
-  Try entering different time periods and dollar amounts too.
-
-  Below this add font awesome feedback options and did not attempt button 
-
-  Show excel chart with user feedback and exercise average ratings with past location data.  aka were fetching previous states. we fetch from tidb
+> **Suggested Mindfulness Exercise ** 
 """
 )
 
@@ -1086,7 +1079,7 @@ def update_card_content(*args):
                 dbc.CardBody([
                     html.Hr(),
                     html.P(
-                        f"This is the {triggered_id.lower()} emotion." if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.", 
+                        f"This is pic of {triggered_id.lower()} emotion." if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.", 
                         className="card-text center-text"
                     )
                 ])
@@ -1318,6 +1311,36 @@ def update_leaderboard_table(rating):
     # Sort by Q-Value in descending order to display the highest Q-value first
     return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
 
+# populate mindfulness exercise
+@app.callback(
+    Output(asset_allocation_text, "children"),
+    [Input(f"{emotion['name']}", "n_clicks") for emotion in emotions],
+    prevent_initial_call=True
+)
+def update_mindfulness_exercise(*args):
+    ctx = callback_context
+    if not ctx.triggered:
+        return no_update
+
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0].replace('-card', '')
+
+    # Filter leaderboard data based on the emotion clicked
+    filtered_exercises = [
+        exercise for exercise, emotion in zip(
+            leaderboard_data["Exercise"], leaderboard_data["Emotion"]
+        ) if emotion.lower() == triggered_id.lower()
+    ]
+
+    if filtered_exercises:
+        # Randomly pick one exercise from the filtered list
+        selected_exercise = random.choice(filtered_exercises)
+    else:
+        selected_exercise = "No matching exercises found."
+
+    # Update the Markdown with the selected exercise
+    return f"""
+    > **Suggested Mindfulness Exercise:** {selected_exercise}
+    """
 
 # Remember to mention
 """
