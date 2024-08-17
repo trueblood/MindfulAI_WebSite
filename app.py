@@ -452,30 +452,30 @@ time_period_data = [
 
 
 mindfulness_feedback_scale = [
-    {
-        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions",
-        "start_yr": 1,
-        "description": "The exercise did not provide relief or made the situation worse."
+        {
+        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress",
+        "start_yr": 5,
+        "description": "The exercise was highly effective and perfectly aligned with my needs."
     },
-    {
+        {
+        "label": "4: Helpful - Exercise significantly improved emotional state",
+        "start_yr": 4,
+        "description": "The exercise was effective in helping manage emotions with good results."
+    },
+        {
+        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective",
+        "start_yr": 3,
+        "description": "The exercise provided moderate relief but wasn’t fully sufficient."
+    },
+        {
         "label": "2: Slightly Helpful - Some minor impact but overall felt irrelevant",
         "start_yr": 2,
         "description": "The exercise had a small positive effect, but was mostly unhelpful."
     },
     {
-        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective",
-        "start_yr": 3,
-        "description": "The exercise provided moderate relief but wasn’t fully sufficient."
-    },
-    {
-        "label": "4: Helpful - Exercise significantly improved emotional state",
-        "start_yr": 4,
-        "description": "The exercise was effective in helping manage emotions with good results."
-    },
-    {
-        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress",
-        "start_yr": 5,
-        "description": "The exercise was highly effective and perfectly aligned with my needs."
+        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions",
+        "start_yr": 1,
+        "description": "The exercise did not provide relief or made the situation worse."
     },
     {
         "label": "Exercise did not apply to my situation - The exercise didn’t fit my current emotional context",
@@ -620,17 +620,30 @@ emotion_cards = html.Div(
                 dbc.Button(
                     dbc.Card(
                         [
-                            dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
+                            dbc.CardImg(
+                                src=app.get_asset_url(emotion['image']), 
+                                top=True, 
+                                style={"padding": "10px", "filter": "grayscale(100%)"}  # Grayscale filter
+                            ),
                             dbc.CardBody([
                                 html.Hr(),
-                                html.H4("Emotion Type?", className="card-title center-text"),
-                                html.P("Click on card to classify emotion.", className="card-text center-text")
+                                html.P(
+                                    [
+                                        "Click on card to classify emotion."  # Second line
+                                    ],
+                                    className="card-text center-text",
+                                    # style={
+                                    #     "font-size": "14px",  # Adjust font size as needed
+                                    #     "text-align": "center", 
+                                    #     "white-space": "normal",  # Allow wrapping to multiple lines
+                                    #     "margin": "0"  # Optional: adjust margins for better spacing
+                                    # }
+                                )
                             ])
                         ],
-                        #style={"width": "18rem", "margin": "auto"}
                     ),
-                    id=f"{emotion['name']}",  # Ensure ID is unique and descriptive
-                    style={"width": "18rem", "margin": "auto", "padding": "0", "border": "none", "background": "none"},
+                    id=f"{emotion['name']}",
+                    style={"width": "18rem", "margin": "auto"},
                     className="clickable-card",
                     n_clicks=0
                 ),
@@ -641,6 +654,8 @@ emotion_cards = html.Div(
     ),
     style={'margin-top': '20px'}
 )
+
+
 
 
 # emotion_cards =html.Div(
@@ -903,7 +918,7 @@ app.layout = dbc.Container(
                         dcc.Graph(id='training_time_bar_chart'),
                       #  dcc.Graph(id="allocation_pie_chart", className="mb-2"),
                        # dcc.Graph(id="returns_chart", className="pb-4"),
-                        html.Hr(),
+                       # html.Hr(),
                         html.Div(id="summary_table"),
                      #   html.H6(datasource_text, className="my-2")
                      
@@ -1057,23 +1072,43 @@ def update_card_content(*args):
     ctx = callback_context
     if not ctx.triggered:
         return [no_update for _ in emotions]
+    
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print(f"Triggered ID: {triggered_id}")
+    
     button_id = triggered_id  # Extract emotion name from button ID
 
-    return [
-        dbc.Card(
+    updated_cards = []
+    for emotion in emotions:
+        card_content = dbc.Card(
             [
                 dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
                 dbc.CardBody([
                     html.Hr(),
-                   # html.H4(f"{emotion['name']} Card" if emotion['name'].lower() == button_id else "Emotion Type?", className="card-title center-text"),
-                    html.P(f"This is the {emotion['name'].lower()} emotion." if emotion['name'].lower() == button_id else "Click on card to classify emotion.", className="card-text center-text")
+                    html.P(
+                        f"This is the {triggered_id.lower()} emotion." if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.", 
+                        className="card-text center-text"
+                    )
                 ])
             ],
-           # style={"width": "18rem", "margin": "auto"}
-        ) for emotion in emotions
-    ]
+        #    style={"width": "18rem", "margin": "auto", "padding": "0", "border": "none", "background": "none"}
+        )
+
+        updated_cards.append(card_content)
+
+    return updated_cards
+
+    # return [
+    #     dbc.Card(
+    #         [
+    #             dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
+    #             dbc.CardBody([
+    #                 html.Hr(),
+    #                 html.P(f"This is the {emotion['name'].lower()} emotion." if emotion['name'].lower() == button_id else "Click on card to classify emotion.", className="card-text center-text")
+    #             ])
+    #         ],
+    #     ) for emotion in emotions
+    # ]
 
 # Callback to update the graph based on selected radio item
 @app.callback(
