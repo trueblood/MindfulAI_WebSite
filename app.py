@@ -1,8 +1,33 @@
 # -*- coding: utf-8 -*-
-from dash import Dash, dcc, html, dash_table, Input, Output, State, callback_context
+from dash import Dash, dcc, html, dash_table, Input, Output, State, callback_context, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import pandas as pd
+import plotly.express as px
+from datetime import datetime, timedelta
+import random
+import pandas as pd
+import numpy as np
+import datetime
+import plotly.express as px
+import dash
+from dash import dcc, html
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output
+
+# Sample Data Preparation
+np.random.seed(42)
+timestamps = pd.date_range(end=datetime.datetime.now(), periods=60, freq='1T')  # 60 minutes range
+feedback_scores = np.random.randint(1, 6, size=60)  # Feedback scores between 1 and 5
+emotions = ['Happy', 'Sad', 'Angry']
+locations = ['Commercial', 'Residential']
+
+data = pd.DataFrame({
+    'Timestamp': timestamps,
+    'Feedback_Score': feedback_scores,
+    'Emotion': np.random.choice(emotions, size=60),
+    'Location': np.random.choice(locations, size=60)
+})
 
 app = Dash(
     __name__,
@@ -57,11 +82,18 @@ asset_allocation_text = dcc.Markdown(
 
 > Change the allocation to cash, bonds and stocks on the sliders and see how your portfolio performs over time in the graph.
   Try entering different time periods and dollar amounts too.
+
+  Below this add font awesome feedback options and did not attempt button 
+
+  Show excel chart with user feedback and exercise average ratings with past location data.  aka were fetching previous states. we fetch from tidb
 """
 )
 
 learn_text = dcc.Markdown(
     """
+Using synchronous training for your project, where you're combining a user recommendation table (off-policy) and semantic vector search (on-policy), is a strategic choice, especially when aiming for consistency and stability in your learning updates
+
+
     Past performance certainly does not determine future results, but you can still
     learn a lot by reviewing how various asset classes have performed over time.
 
@@ -274,6 +306,23 @@ def make_line_chart(dff):
 Make Tabs
 """
 
+# Create the card component containing the graph
+# model_feedback_performance_card = dbc.Card(
+#     [
+#         dbc.CardHeader("Real-Time Model Feedback Performance"),
+#         dbc.CardBody([
+#             dcc.Graph(id='real-time-model-performance-graph'),
+#             dcc.Interval(
+#                 id='interval-component',
+#                 interval=10*1000,  # 10 seconds interval
+#                 n_intervals=0
+#             )
+#         ])
+#     ],
+#     className="mt-4",
+# )
+
+
 # =======Play tab components
 
 asset_allocation_card = dbc.Card(asset_allocation_text, className="mt-2")
@@ -339,17 +388,52 @@ time_period_data = [
 ]
 
 
+mindfulness_feedback_scale = [
+    {
+        "label": "Exercise did not apply to my situation - The exercise didn’t fit my current emotional context",
+        "rating": 0,
+        "description": "The exercise wasn’t relevant to what I was experiencing."
+    },
+    {
+        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions",
+        "rating": 1,
+        "description": "The exercise did not provide relief or made the situation worse."
+    },
+    {
+        "label": "2: Slightly Helpful - Some minor impact but overall felt irrelevant",
+        "rating": 2,
+        "description": "The exercise had a small positive effect, but was mostly unhelpful."
+    },
+    {
+        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective",
+        "rating": 3,
+        "description": "The exercise provided moderate relief but wasn’t fully sufficient."
+    },
+    {
+        "label": "4: Helpful - Exercise significantly improved emotional state",
+        "rating": 4,
+        "description": "The exercise was effective in helping manage emotions with good results."
+    },
+    {
+        "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress",
+        "rating": 5,
+        "description": "The exercise was highly effective and perfectly aligned with my needs."
+    }
+]
+
+
+
 time_period_card = dbc.Card(
     [
         html.H4(
-            "Or select a time period:",
+            "Mindfulness Exercise: Select a time period to invest",
             className="card-title",
         ),
         dbc.RadioItems(
             id="time_period",
             options=[
                 {"label": period["label"], "value": i}
-                for i, period in enumerate(time_period_data)
+                for i, period in enumerate(mindfulness_feedback_scale)
             ],
             value=0,
             labelClassName="mb-2",
@@ -358,6 +442,8 @@ time_period_card = dbc.Card(
     body=True,
     className="mt-4",
 )
+
+
 
 # ======= InputGroup components
 
@@ -462,25 +548,25 @@ results_card = dbc.Card(
 #     ),
 #     style={'margin-top': '20px'}
 # )
-emotion_cards =html.Div(
+
+emotion_cards = html.Div(
     dbc.Row(
         [
             dbc.Col(
-                dbc.Button(  # Use Button to wrap the Card for click functionality
+                dbc.Button(
                     dbc.Card(
                         [
                             dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
                             dbc.CardBody([
                                 html.Hr(),
-                                html.H4(f"{emotion['name']} Card", className="card-title center-text"),
-                                html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
+                                html.H4("Emotion Type?", className="card-title center-text"),
+                                html.P("Click on card to classify emotion.", className="card-text center-text")
                             ])
                         ],
-                      #  style={"width": "18rem", "margin": "auto"}
+                        #style={"width": "18rem", "margin": "auto"}
                     ),
-                    id=f"{emotion['name']}",  # Assign ID to Button instead of Card
-                    #style={"padding": "0", "border": "none", "background": "none"},  # Make Button invisible
-                    style={"width": "18rem", "margin": "auto"},
+                    id=f"{emotion['name']}",  # Ensure ID is unique and descriptive
+                    style={"width": "18rem", "margin": "auto", "padding": "0", "border": "none", "background": "none"},
                     className="clickable-card",
                     n_clicks=0
                 ),
@@ -491,6 +577,37 @@ emotion_cards =html.Div(
     ),
     style={'margin-top': '20px'}
 )
+
+
+# emotion_cards =html.Div(
+#     dbc.Row(
+#         [
+#             dbc.Col(
+#                 dbc.Button(  # Use Button to wrap the Card for click functionality
+#                     dbc.Card(
+#                         [
+#                             dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
+#                             dbc.CardBody([
+#                                 html.Hr(),
+#                                 html.H4(f"{emotion['name']} Card", className="card-title center-text"),
+#                                 html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
+#                             ])
+#                         ],
+#                       #  style={"width": "18rem", "margin": "auto"}
+#                     ),
+#                     id=f"{emotion['name']}",  # Assign ID to Button instead of Card
+#                     #style={"padding": "0", "border": "none", "background": "none"},  # Make Button invisible
+#                     style={"width": "18rem", "margin": "auto"},
+#                     className="clickable-card",
+#                     n_clicks=0
+#                 ),
+#                 md=4
+#             ) for emotion in emotions
+#         ],
+#         justify="around"
+#     ),
+#     style={'margin-top': '20px'}
+# )
 
 data_source_card = dbc.Card(
     [
@@ -506,6 +623,24 @@ learn_card = dbc.Card(
     [
         dbc.CardHeader("An Introduction to Asset Allocation"),
         dbc.CardBody(learn_text),
+        dbc.Row(
+    dbc.Col(
+        html.Div([
+            html.H1('Live Data Stream Graph - Feedback Scores Over Time', style={'textAlign': 'center'}),
+            html.H2('Rate Your Experience', style={'textAlign': 'center', 'marginBottom': '20px'}),
+            html.Div([
+                html.Button('1', id='button-1', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
+                html.Button('2', id='button-2', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
+                html.Button('3', id='button-3', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
+                html.Button('4', id='button-4', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
+                html.Button('5', id='button-5', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
+            ], style={'display': 'flex', 'justifyContent': 'space-around', 'marginBottom': '20px'}),
+            html.Div([
+                html.Button('Exercise Not Relevant', id='button-not-relevant', n_clicks=0, style={'width': '200px', 'height': '50px', 'fontSize': '24px', 'margin': '5px auto'}),
+            ], style={'display': 'flex', 'justifyContent': 'center'}),
+        ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '10px', 'boxShadow': '0 0 10px rgba(0, 0, 0, 0.1)'}),
+    )
+)
     ],
     className="mt-4",
 )
@@ -516,7 +651,7 @@ tabs = dbc.Tabs(
     [
         dbc.Tab(learn_card, tab_id="tab1", label="Learn"),
         dbc.Tab(
-            [asset_allocation_text, slider_card, input_groups, time_period_card],
+            [asset_allocation_text, time_period_card, slider_card, input_groups],
             tab_id="tab-2",
             label="Play",
             className="pb-4",
@@ -635,19 +770,53 @@ app.layout = dbc.Container(
                 ),
             )
         ),
-        dbc.Row(
-            dbc.Col(
+        # dbc.Row(
+        #     dbc.Col(
+        #     html.Div([
+        #         html.H1("Emotion Cards"),
+        #         emotion_cards
+        #     ]),
+        #     ),
+        #     align="center"  # Add align="center" to center the content of the row
+        # ),
+ 
+    dbc.Row(
+        dbc.Col(
             html.Div([
-                html.H1("Emotion Cards"),
+         #       html.H1("Emotion Cards", className="text-center"),  # Center the title
                 emotion_cards
-            ]),
-            ),
-            align="center"  # Add align="center" to center the content of the row
+            ], className="text-center"),  # Center the content within the div
+            #width={"size": 10, "offset": 1}  # Adjust the size and offset to center the column
         ),
-
+        justify="center",  # Ensures the row content is centered
+        align="center",  # Vertically centers the row content
+        className="h-100"  # Make sure the row takes full height if needed
+    ),
         html.Hr(),
+            # dbc.Row(
+            #     dbc.Col(
+            #         html.Div([
+            #             html.H1('Live Data Stream Graph - Feedback Scores Over Time'),
+            #             html.H2('Rate Your Experience'),
+            #             html.Div([
+            #                 html.Button('1', id='button-1', n_clicks=0),
+            #                 html.Button('2', id='button-2', n_clicks=0),
+            #                 html.Button('3', id='button-3', n_clicks=0),
+            #                 html.Button('4', id='button-4', n_clicks=0),
+            #                 html.Button('5', id='button-5', n_clicks=0),
+            #             ], style={'display': 'flex', 'justify-content': 'space-between'}),
+            #             html.Div([
+            #                 html.Button('Exercise Not Relevant', id='button-not-relevant', n_clicks=0),
+            #             ], style={'display': 'flex', 'justify-content': 'center', 'margin-top': '10px'}),
+            #         ])
+            #     )
+            # ),
         dbc.Row(
             [
+
+
+
+
                 dbc.Col(tabs, width=12, lg=5, className="mt-4 border"),
                 dbc.Col(
                     [
@@ -656,6 +825,7 @@ app.layout = dbc.Container(
                         html.Hr(),
                         html.Div(id="summary_table"),
                         html.H6(datasource_text, className="my-2"),
+                        dcc.Graph(id="live_graph")
                     ],
                     width=12,
                     className="col-12 pt-4",
@@ -796,6 +966,257 @@ def update_totals(stocks, cash, start_bal, planning_time, start_yr):
     ending_cagr = cagr(dff["Total"])
 
     return data, fig, summary_table, ending_amount, ending_cagr
+
+@app.callback(
+    [Output(f"{emotion['name']}", "children") for emotion in emotions],
+    [Input(f"{emotion['name']}", "n_clicks") for emotion in emotions],
+    prevent_initial_call=True
+)
+def update_card_content(*args):
+    ctx = callback_context
+    if not ctx.triggered:
+        return [no_update for _ in emotions]
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    print(f"Triggered ID: {triggered_id}")
+    button_id = triggered_id  # Extract emotion name from button ID
+
+    return [
+        dbc.Card(
+            [
+                dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
+                dbc.CardBody([
+                    html.Hr(),
+                   # html.H4(f"{emotion['name']} Card" if emotion['name'].lower() == button_id else "Emotion Type?", className="card-title center-text"),
+                    html.P(f"This is the {emotion['name'].lower()} emotion." if emotion['name'].lower() == button_id else "Click on card to classify emotion.", className="card-text center-text")
+                ])
+            ],
+           # style={"width": "18rem", "margin": "auto"}
+        ) for emotion in emotions
+    ]
+
+
+
+
+
+
+# Callback to update the graph based on selected radio item
+@app.callback(
+    Output("live_graph", "figure"),
+    Input("time_period", "value")
+)
+def update_graph(selected_period):
+    # Filter data or modify based on the selected radio value
+    filtered_data = data.copy().iloc[::(selected_period + 1)]  # Example of filtering, modify as needed
+
+    filtered_data['Time_Ago'] = [(f"{(datetime.datetime.now() - ts).seconds // 60} minutes ago") for ts in filtered_data['Timestamp']]
+
+    # Plot with Plotly
+    fig = px.line(filtered_data, x='Time_Ago', y='Feedback_Score', markers=True, title='Live Data Stream Graph - Feedback Scores Over Time',
+                  hover_name='Time_Ago',
+                  hover_data=['Emotion', 'Location'])
+    fig.update_layout(
+        xaxis_title='Time (Minutes Ago)',
+        yaxis_title='Feedback Score (1-5)',
+        xaxis_tickangle=-45,
+        plot_bgcolor='#FFFFFF',
+        paper_bgcolor='#FFFFFF',
+        font_color='#333333',
+        xaxis=dict(showgrid=True, gridwidth=0.5, gridcolor='#CCCCCC'),
+        yaxis=dict(showgrid=True, gridwidth=0.5, gridcolor='#CCCCCC')
+    )
+    return fig
+
+# Remember to mention
+"""
+Real-Time Data Updates
+
+Type: Live Data Stream Graph, Stream keyword sounds good!!!!
+Purpose: Showcase the capability of TiDB to handle real-time data updates, which are crucial for the responsiveness of your RL model.
+Data Points: Timestamped entries showing data updates, queries per second, and any relevant metrics that reflect system responsiveness.
+"""
+# Generate fake data function for demonstration remember to replace with real data
+# def generate_fake_data():
+#     base_time = datetime.now()
+#     data = {
+#         "timestamp": [base_time - timedelta(minutes=15 - x) for x in range(15)],
+#         "feedback_score": [random.randint(1, 5) if random.random() > 0.2 else 'Did Not Do' for _ in range(15)]
+#     }
+#     return pd.DataFrame(data)
+
+# # Fetch latest feedback data function remember to replace with real data
+# def fetch_latest_feedback_data():
+#     return generate_fake_data()
+
+# # Callback to update the graph component
+# @app.callback(
+#     Output('real-time-model-performance-graph', 'figure'),
+#     Input('interval-component', 'n_intervals')
+# )
+# def update_performance_graph(n):
+#     df = fetch_latest_feedback_data()
+#     df_filtered = df[df['feedback_score'] != 'Did Not Do']
+
+#     # Create the figure using plotly.graph_objects
+#     fig = go.Figure()
+#     fig.add_trace(go.Scatter(
+#         x=df_filtered['timestamp'], 
+#         y=df_filtered['feedback_score'], 
+#         mode='lines+markers',
+#         name='Feedback Score'
+#     ))
+
+#     fig.update_layout(
+#         title='Real-Time Model Feedback Performance',
+#         xaxis_title='Time',
+#         yaxis_title='Feedback Score',
+#         yaxis_range=[0,5]
+#     )
+
+#     return fig
+
+
+# Generate initial static fake data
+# base_time = datetime.now()
+# data = {
+#     "timestamp": [base_time - timedelta(minutes=x) for x in range(15)],
+#     "feedback_score": [random.randint(1, 5) for _ in range(15)]
+# }
+# df = pd.DataFrame(data)
+
+# def relative_time(x):
+#     delta = datetime.now() - x
+#     if delta.days > 0:
+#         return f"{delta.days} days ago"
+#     elif delta.seconds > 3600:
+#         return f"{delta.seconds // 3600} hours ago"
+#     else:
+#         return f"{delta.seconds // 60} minutes ago"
+
+# # Apply relative time conversion
+# df['relative_time'] = df['timestamp'].apply(relative_time)
+
+# @app.callback(
+#     Output('feedback-graph', 'figure'),
+#     Input('interval-component', 'n_intervals')
+# )
+# def update_graph(n):
+#     fig = go.Figure()
+
+#     fig.add_trace(go.Scatter(
+#         x=df['relative_time'], 
+#         y=df['feedback_score'], 
+#         mode='lines+markers',
+#         name='Feedback Score'
+#     ))
+
+#     fig.update_layout(
+#         title='Feedback Performance Over Time',
+#         xaxis_title='Time Ago',
+#         yaxis_title='Feedback Score',
+#         yaxis=dict(range=[0, 6]),
+#         xaxis=dict(type='category')
+#     )
+
+#     return fig
+
+
+
+
+
+
+
+
+
+
+# from dash import Dash, html, dcc
+# import plotly.graph_objects as go
+# import pandas as pd
+# import sqlalchemy
+# from dash.dependencies import Input, Output
+
+# # Establish a connection to TiDB
+# engine = sqlalchemy.create_engine('mysql+pymysql://user:password@host/dbname')
+
+# app = Dash(__name__)
+
+# def fetch_query_data():
+#     query = """
+#     SELECT query_time, data_volume, response_time
+#     FROM query_log
+#     ORDER BY query_time DESC
+#     LIMIT 100
+#     """
+#     df = pd.read_sql(query, con=engine)
+#     return df
+
+# @app.callback(
+#     Output('query-data-graph', 'figure'),
+#     Input('interval-component', 'n_intervals')
+# )
+# def update_graph(n):
+#     df = fetch_query_data()
+#     fig = go.Figure()
+#     fig.add_trace(go.Scatter(x=df['query_time'], y=df['data_volume'], name='Data Volume', mode='lines+markers'))
+#     fig.add_trace(go.Scatter(x=df['query_time'], y=df['response_time'], name='Response Time', mode='lines+markers'))
+#     fig.update_layout(title='Real-Time Query Volume and Response Times', xaxis_title='Time', yaxis_title='Volume/Response Time')
+#     return fig
+
+# app.layout = html.Div([
+#     dcc.Graph(id='query-data-graph'),
+#     dcc.Interval(
+#         id='interval-component',
+#         interval=30*1000,  # 30 seconds interval
+#         n_intervals=0
+#     )
+# ])
+
+
+
+
+# # Training Time and Database Fetch Time
+
+# from dash import Dash, html, dcc
+# import plotly.graph_objects as go
+# import pandas as pd
+# import sqlalchemy
+# from dash.dependencies import Input, Output, State
+
+# # Establish a connection to TiDB
+# engine = sqlalchemy.create_engine('mysql+pymysql://user:password@host/dbname')
+
+# app = Dash(__name__)
+
+# def fetch_training_data():
+#     query = """
+#     SELECT iteration, computation_time, fetch_time, data_volume
+#     FROM training_log
+#     ORDER BY iteration ASC
+#     """
+#     df = pd.read_sql(query, con=engine)
+#     return df
+
+# @app.callback(
+#     Output('training-time-graph', 'figure'),
+#     Input('update-button', 'n_clicks')
+# )
+# def update_training_graph(n_clicks):
+#     df = fetch_training_data()
+#     fig = go.Figure(data=[
+#         go.Bar(name='Computation Time', x=df['iteration'], y=df['computation_time'], hoverinfo='y'),
+#         go.Bar(name='Fetch Time', x=df['iteration'], y=df['fetch_time'], hoverinfo='y'),
+#         go.Bar(name='Data Volume (Rows)', x=df['iteration'], y=df['data_volume'], hoverinfo='y')
+#     ])
+#     fig.update_layout(barmode='stack', title='Training, Fetch Times, and Data Volume Per Iteration',
+#                       xaxis_title='Iteration', yaxis_title='Time (seconds) / Data Volume (Rows)')
+#     return fig
+
+# app.layout = html.Div([
+#     html.Button('Update Data', id='update-button', n_clicks=0),
+#     dcc.Graph(id='training-time-graph')
+# ])
+
+# if __name__ == '__main__':
+#     app.run_server(debug=True)
 
 
 if __name__ == "__main__":
