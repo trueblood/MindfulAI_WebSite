@@ -49,6 +49,30 @@ emotions = [
     {"name": "Angry", "image": "images/angry/angry_0b4fb5f008ae748b2bfe8fc4d35af1d37ab56120acbbd135be98fdb5.jpg"}
 ]
 
+# Sample data for the table
+leaderboard_data = {
+    "Exercise": [
+        "Journaling to process thoughts and reflect on emotions.",
+        "Writing down daily goals to organize and focus the mind.",
+        "Breathing in deeply through the nose, hold for a few seconds, then exhale slowly.",
+        "Writing a gratitude list to enhance positive emotions.",
+        "Practice mindful breathing by counting each breath cycle.",
+        "Guided visualization breathing exercises for stress relief.",
+        "Structured journaling to explore thought patterns.",
+        "Perform the downward dog yoga pose for a quick energy boost.",
+        "Stretching routine with focus on controlled breathing.",
+        "Free-form journaling to let thoughts flow without restrictions."
+    ],
+    "Emotion": ["Happy", "Sad", "Sad", "Sad", "Angry", "Sad", "Sad", "Angry", "Sad", "Sad"],
+    "Exercise Type": ["Journaling", "Journaling", "Breathing Exercise", "Journaling", "Breathing Exercise", "Breathing Exercise", "Journaling", "Yoga", "Yoga", "Journaling"],
+    "Location": ["Commercial", "Residential", "Residential", "Residential", "Commercial", "Commercial", "Residential", "Commercial", "Residential", "Residential"],
+    "Q-Value": [0.88, 0.83, 0.72, 0.79, 0.74, 0.69, 0.77, 0.68, 0.65, 0.70],
+    "Source": ["user_feedback_for_that_user", "recommended_table", "recommended_table", "user_feedback_for_that_user", "user_feedback_for_that_user", "user_feedback_for_that_user", "recommended_table", "user_feedback_for_that_user", "recommended_table", "recommended_table"]
+}
+
+# Convert the data into a Pandas DataFrame
+df_leaderboard = pd.DataFrame(leaderboard_data)
+
 #  make dataframe from  spreadsheet:
 df = pd.read_csv("assets/historic.csv")
 
@@ -184,44 +208,44 @@ annual_returns_pct_table = dash_table.DataTable(
 )
 
 
-# def make_summary_table(dff):
-#     """Make html table to show cagr and  best and worst periods"""
+def make_summary_table(dff):
+    """Make html table to show cagr and  best and worst periods"""
 
-#     table_class = "h5 text-body text-nowrap"
-#     cash = html.Span(
-#         [html.I(className="fa fa-money-bill-alt"), " Cash"], className=table_class
-#     )
-#     bonds = html.Span(
-#         [html.I(className="fa fa-handshake"), " Bonds"], className=table_class
-#     )
-#     stocks = html.Span(
-#         [html.I(className="fa fa-industry"), " Stocks"], className=table_class
-#     )
-#     inflation = html.Span(
-#         [html.I(className="fa fa-ambulance"), " Inflation"], className=table_class
-#     )
+    table_class = "h5 text-body text-nowrap"
+    cash = html.Span(
+        [html.I(className="fa fa-money-bill-alt"), " Cash"], className=table_class
+    )
+    bonds = html.Span(
+        [html.I(className="fa fa-handshake"), " Bonds"], className=table_class
+    )
+    stocks = html.Span(
+        [html.I(className="fa fa-industry"), " Stocks"], className=table_class
+    )
+    inflation = html.Span(
+        [html.I(className="fa fa-ambulance"), " Inflation"], className=table_class
+    )
 
-#     start_yr = dff["Year"].iat[0]
-#     end_yr = dff["Year"].iat[-1]
+    start_yr = dff["Year"].iat[0]
+    end_yr = dff["Year"].iat[-1]
 
-#     df_table = pd.DataFrame(
-#         {
-#             "": [cash, bonds, stocks, inflation],
-#             f"Rate of Return (CAGR) from {start_yr} to {end_yr}": [
-#                 cagr(dff["all_cash"]),
-#                 cagr(dff["all_bonds"]),
-#                 cagr(dff["all_stocks"]),
-#                 cagr(dff["inflation_only"]),
-#             ],
-#             f"Worst 1 Year Return": [
-#                 worst(dff, "3-mon T.Bill"),
-#                 worst(dff, "10yr T.Bond"),
-#                 worst(dff, "S&P 500"),
-#                 "",
-#             ],
-#         }
-#     )
-#     return dbc.Table.from_dataframe(df_table, bordered=True, hover=True)
+    df_table = pd.DataFrame(
+        {
+            "": [cash, bonds, stocks, inflation],
+            f"Rate of Return (CAGR) from {start_yr} to {end_yr}": [
+                cagr(dff["all_cash"]),
+                cagr(dff["all_bonds"]),
+                cagr(dff["all_stocks"]),
+                cagr(dff["inflation_only"]),
+            ],
+            f"Worst 1 Year Return": [
+                worst(dff, "3-mon T.Bill"),
+                worst(dff, "10yr T.Bond"),
+                worst(dff, "S&P 500"),
+                "",
+            ],
+        }
+    )
+    return dbc.Table.from_dataframe(df_table, bordered=True, hover=True)
 
 
 """
@@ -372,6 +396,31 @@ slider_card = dbc.Card(
     className="mt-4",
 )
 
+feedback_leaderboard_table = dbc.Card(
+    [
+        html.H4("Feedback Leaderboard", className="card-title text-center mt-3"),
+        dash_table.DataTable(
+            id='leaderboard_table',
+            columns=[{"name": col, "id": col} for col in df_leaderboard.columns],
+            data=df_leaderboard.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
+            style_cell={'textAlign': 'left'},
+            style_data_conditional=[
+                {
+                    'if': {'filter_query': '{Source} = "user_feedback_for_that_user"'},
+                    'backgroundColor': 'rgb(220, 220, 220)'
+                },
+                {
+                    'if': {'filter_query': '{Source} = "recommended_table"'},
+                    'backgroundColor': 'rgb(245, 245, 245)'
+                }
+            ],
+            page_size=10
+        ),
+    ],
+    body=True,
+    className="mt-4",
+)
 
 time_period_data = [
     {
@@ -857,11 +906,18 @@ app.layout = dbc.Container(
                         html.Hr(),
                         html.Div(id="summary_table"),
                      #   html.H6(datasource_text, className="my-2")
+                     
                     ],
                     width=12,
                     lg=7,
                     className="pt-4",
                 ),
+            ],
+            className="ms-1",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(feedback_leaderboard_table)
             ],
             className="ms-1",
         ),
