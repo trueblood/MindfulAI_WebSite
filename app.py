@@ -127,42 +127,23 @@ asset_allocation_card = dbc.Card(
 # """
 # )
 
+
 learn_text = dcc.Markdown(
     """
-Using synchronous training for your project, where you're combining a user recommendation table (off-policy) and semantic vector search (on-policy), is a strategic choice, especially when aiming for consistency and stability in your learning updates. Make this talk about the top and bottom graphs and how they relate to tidb serverless and vector and how our RL technology utilizes it
+    ## System Overview
 
+    Our system captures users' emotional expressions from facial images and location data. These are processed through a Convolutional Neural Network (CNN) and a Text Embedding Model to generate vector embeddings. These vectors are then sent to our API and stored in the **TiDB Serverless Database**.
 
+    ## Reinforcement Learning Model
 
+    Our Reinforcement Learning (RL) model employs a hybrid of **on-policy** and **off-policy** methods. It activates and selects the optimal mindfulness exercise by integrating current state assessments with historical data and vector semantic search queries within TiDB.
 
+    ### Q-Learning
 
-
-
-
-
-
-    Past performance certainly does not determine future results, but you can still
-    learn a lot by reviewing how various asset classes have performed over time.
-
-    Use the sliders to change the asset allocation (how much you invest in cash vs
-    bonds vs stock) and see how this affects your returns.
-
-    Note that the results shown in "My Portfolio" assumes rebalancing was done at
-    the beginning of every year.  Also, this information is based on the S&P 500 index
-    as a proxy for "stocks", the 10 year US Treasury Bond for "bonds" and the 3 month
-    US Treasury Bill for "cash."  Your results of course,  would be different based
-    on your actual holdings.
-
-    This is intended to help you determine your investment philosophy and understand
-    what sort of risks and returns you might see for each asset category.
-
-    The  data is from [Aswath Damodaran](http://people.stern.nyu.edu/adamodar/New_Home_Page/home.htm)
-    who teaches  corporate finance and valuation at the Stern School of Business
-    at New York University.
-
-    Check out his excellent on-line course in
-    [Investment Philosophies.](http://people.stern.nyu.edu/adamodar/New_Home_Page/webcastinvphil.htm)
+    The model utilizes **Q-Learning**, an algorithm designed to predict the best action in a given situation to maximize reward. Feedback from users on the suggested exercises is used to adjust the Q-values in the database, refining future recommendations. If no feedback is received, the Q-value remains unchanged.
     """
 )
+
 
 cagr_text = dcc.Markdown(
     """
@@ -770,26 +751,14 @@ data_source_card = dbc.Card(
 # ========= Learn Tab  Components
 learn_card = dbc.Card(
     [
-        dbc.CardHeader("An Introduction to Asset Allocation"),
-        dbc.CardBody(learn_text),
-        dbc.Row(
-    dbc.Col(
-        html.Div([
-            html.H1('Live Data Stream Graph - Feedback Scores Over Time', style={'textAlign': 'center'}),
-            html.H2('Rate Your Experience', style={'textAlign': 'center', 'marginBottom': '20px'}),
-            html.Div([
-                html.Button('1', id='button-1', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
-                html.Button('2', id='button-2', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
-                html.Button('3', id='button-3', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
-                html.Button('4', id='button-4', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
-                html.Button('5', id='button-5', n_clicks=0, style={'width': '50px', 'height': '50px', 'fontSize': '24px', 'margin': '5px'}),
-            ], style={'display': 'flex', 'justifyContent': 'space-around', 'marginBottom': '20px'}),
-            html.Div([
-                html.Button('Exercise Not Relevant', id='button-not-relevant', n_clicks=0, style={'width': '200px', 'height': '50px', 'fontSize': '24px', 'margin': '5px auto'}),
-            ], style={'display': 'flex', 'justifyContent': 'center'}),
-        ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '10px', 'boxShadow': '0 0 10px rgba(0, 0, 0, 0.1)'}),
-    )
-)
+        dbc.CardHeader("Emotional Response Analysis and Reinforcement Learning System Overview"),
+        dbc.CardBody(
+            html.Div(
+                learn_text,
+                style={"overflow": "scroll", "height": "300px"}
+            )
+        ),
+        dbc.CardImg(src=app.get_asset_url("images/learn/qlearning.png"), top=True)
     ],
     className="mt-4",
 )
@@ -962,7 +931,7 @@ app.layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 html.H2(
-                    "Mindful AI",
+                    "Embrace AI",
                     className="text-center bg-primary text-white p-2",
                 ),
             )
@@ -1288,7 +1257,7 @@ def update_chart_on_feedback(value):
 
     fig.update_layout(
         barmode='group',
-        title='TiDB Retrieval & Agent Navigation Times',
+        title='TiDB Retrieval & Agent Info',
         xaxis_title='Agent Episode Iterations',
         yaxis_title='Metrics',
         legend_title='Metrics',
