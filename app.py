@@ -109,6 +109,18 @@ datasource_text = dcc.Markdown(
 )
 # Markdown component to display the selected exercise
 asset_allocation_text = dcc.Markdown(id="asset_allocation_text")
+asset_allocation_card = dbc.Card(
+    [
+        html.Br(),
+        html.H5(
+            "AI Suggested Mindfulness Exercise By Selected Emotion Card",
+            className="card-title  text-center"
+        ),
+        html.Br(),
+        html.P(asset_allocation_text, className="card-text text-center"),
+    ],
+    className="mt-2",
+)
 
 # asset_allocation_text = dcc.Markdown(
 #     """
@@ -357,7 +369,8 @@ Make Tabs
 
 # =======Play tab components
 
-asset_allocation_card = dbc.Card(asset_allocation_text, className="mt-2")
+#asset_allocation_card = dbc.Card(asset_allocation_text, className="mt-2")
+
 
 slider_card = dbc.Card(
     [
@@ -482,17 +495,18 @@ mindfulness_feedback_scale = [
 
 time_period_card = dbc.Card(
     [
-        html.H4(
+        html.H5(
             "Suggested Mindfulness Exercise Feedback Rating",
-            className="card-title",
+            className="card-title text-center",
         ),
+        html.Hr(),
         dbc.RadioItems(
             id="time_period",
             options=[
                 {"label": period["label"], "value": i}
                 for i, period in enumerate(mindfulness_feedback_scale)
             ],
-            value=0,
+            value=5,
             labelClassName="mb-2",
         ),
     ],
@@ -724,7 +738,7 @@ tabs = dbc.Tabs(
     [
         dbc.Tab(learn_card, tab_id="tab1", label="Learn"),
         dbc.Tab(
-            [asset_allocation_text, time_period_card, input_groups],
+            [asset_allocation_card, time_period_card, input_groups],
             tab_id="tab-2",
             label="Play",
             className="pb-4",
@@ -895,7 +909,8 @@ app.layout = dbc.Container(
             dbc.Col(
                 html.Div([
                 #       html.H1("Emotion Cards", className="text-center"),  # Center the title
-                    emotion_cards
+                    emotion_cards,
+                    html.Br(),
                 ], className="text-center"),  # Center the content within the div
                 #width={"size": 10, "offset": 1}  # Adjust the size and offset to center the column
             ),
@@ -903,6 +918,7 @@ app.layout = dbc.Container(
             align="center",  # Vertically centers the row content
             className="h-100"  # Make sure the row takes full height if needed
         ),
+
         dbc.Row(
             [
                 dbc.Col(tabs, width=12, lg=5, className="mt-4 border"),
@@ -1080,7 +1096,7 @@ def update_card_content(*args):
                 dbc.CardBody([
                     html.Hr(),
                     html.P(
-                        f"This is pic of {triggered_id.lower()} emotion." if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.", 
+                        f"This is a pic of {triggered_id.upper()} emotion." if emotion['name'].lower() == triggered_id.lower() else "Click on card to classify emotion.",
                         className="card-text center-text"
                     )
                 ])
@@ -1326,7 +1342,7 @@ def update_mindfulness_exercise(*args):
 def update_leaderboard_table(rating, selected_exercise_text):
     #print("rating", rating)
     global df_leaderboard
-    if rating == 0:
+    if rating == 0 or selected_exercise_text is None:
         # No update if the rating is 0
         return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
     
