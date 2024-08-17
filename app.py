@@ -398,22 +398,22 @@ time_period_data = [
 
 mindfulness_feedback_scale = [
     {
-        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions (Great Financial Crisis scenario)",
+        "label": "1: Not Helpful - Exercise felt overwhelming or not useful in managing emotions",
         "start_yr": 1,
         "description": "The exercise did not provide relief or made the situation worse."
     },
     {
-        "label": "2: Slightly Helpful - Some minor impact but overall felt irrelevant (Dotcom Bubble scenario)",
+        "label": "2: Slightly Helpful - Some minor impact but overall felt irrelevant",
         "start_yr": 2,
         "description": "The exercise had a small positive effect, but was mostly unhelpful."
     },
     {
-        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective (1970s Energy Crisis scenario)",
+        "label": "3: Moderately Helpful - Exercise helped manage some emotions but not entirely effective",
         "start_yr": 3,
         "description": "The exercise provided moderate relief but wasn’t fully sufficient."
     },
     {
-        "label": "4: Helpful - Exercise significantly improved emotional state (Great Depression scenario)",
+        "label": "4: Helpful - Exercise significantly improved emotional state",
         "start_yr": 4,
         "description": "The exercise was effective in helping manage emotions with good results."
     },
@@ -768,6 +768,54 @@ def worst(dff, asset):
 ===========================================================================
 Main Layout
 """
+# app.layout = dbc.Container(
+#     [
+#         dbc.Row(
+#             dbc.Col(
+#                 html.H2(
+#                     "Mindful AI",
+#                     className="text-center bg-primary text-white p-2",
+#                 ),
+#             )
+#         ),
+#     dbc.Row(
+#         dbc.Col(
+#             html.Div([
+#          #       html.H1("Emotion Cards", className="text-center"),  # Center the title
+#                 emotion_cards
+#             ], className="text-center"),  # Center the content within the div
+#             #width={"size": 10, "offset": 1}  # Adjust the size and offset to center the column
+#         ),
+#         justify="center",  # Ensures the row content is centered
+#         align="center",  # Vertically centers the row content
+#         className="h-100"  # Make sure the row takes full height if needed
+#     ),
+#         dbc.Row(
+#             [
+
+
+
+
+#                 dbc.Col(tabs, width=12, lg=5, className="mt-4 border"),
+#                 dbc.Col(
+#                     [
+#                         dcc.Graph(id="allocation_pie_chart", className="mb-2"),
+#                         dcc.Graph(id="returns_chart", className="pb-4"),
+#                         html.Hr(),
+#                         html.Div(id="summary_table"),
+#                         html.H6(datasource_text, className="my-2"),
+#                         dcc.Graph(id="live_graph")
+#                     ],
+#                     width=12,
+#                     className="col-12 pt-4",
+#                 ),
+#             ],
+#             className="ms-1",
+#         ),
+#         dbc.Row(dbc.Col(footer)),
+#     ],
+#     fluid=True,
+# )
 app.layout = dbc.Container(
     [
         dbc.Row(
@@ -778,65 +826,33 @@ app.layout = dbc.Container(
                 ),
             )
         ),
-        # dbc.Row(
-        #     dbc.Col(
-        #     html.Div([
-        #         html.H1("Emotion Cards"),
-        #         emotion_cards
-        #     ]),
-        #     ),
-        #     align="center"  # Add align="center" to center the content of the row
-        # ),
- 
-    dbc.Row(
-        dbc.Col(
-            html.Div([
-         #       html.H1("Emotion Cards", className="text-center"),  # Center the title
-                emotion_cards
-            ], className="text-center"),  # Center the content within the div
-            #width={"size": 10, "offset": 1}  # Adjust the size and offset to center the column
+        dbc.Row(
+            dbc.Col(
+                html.Div([
+                #       html.H1("Emotion Cards", className="text-center"),  # Center the title
+                    emotion_cards
+                ], className="text-center"),  # Center the content within the div
+                #width={"size": 10, "offset": 1}  # Adjust the size and offset to center the column
+            ),
+            justify="center",  # Ensures the row content is centered
+            align="center",  # Vertically centers the row content
+            className="h-100"  # Make sure the row takes full height if needed
         ),
-        justify="center",  # Ensures the row content is centered
-        align="center",  # Vertically centers the row content
-        className="h-100"  # Make sure the row takes full height if needed
-    ),
-        html.Hr(),
-            # dbc.Row(
-            #     dbc.Col(
-            #         html.Div([
-            #             html.H1('Live Data Stream Graph - Feedback Scores Over Time'),
-            #             html.H2('Rate Your Experience'),
-            #             html.Div([
-            #                 html.Button('1', id='button-1', n_clicks=0),
-            #                 html.Button('2', id='button-2', n_clicks=0),
-            #                 html.Button('3', id='button-3', n_clicks=0),
-            #                 html.Button('4', id='button-4', n_clicks=0),
-            #                 html.Button('5', id='button-5', n_clicks=0),
-            #             ], style={'display': 'flex', 'justify-content': 'space-between'}),
-            #             html.Div([
-            #                 html.Button('Exercise Not Relevant', id='button-not-relevant', n_clicks=0),
-            #             ], style={'display': 'flex', 'justify-content': 'center', 'margin-top': '10px'}),
-            #         ])
-            #     )
-            # ),
         dbc.Row(
             [
-
-
-
-
                 dbc.Col(tabs, width=12, lg=5, className="mt-4 border"),
                 dbc.Col(
                     [
+                        dcc.Graph(id="live_graph"),
                         dcc.Graph(id="allocation_pie_chart", className="mb-2"),
                         dcc.Graph(id="returns_chart", className="pb-4"),
                         html.Hr(),
                         html.Div(id="summary_table"),
-                        html.H6(datasource_text, className="my-2"),
-                        dcc.Graph(id="live_graph")
+                        html.H6(datasource_text, className="my-2")
                     ],
                     width=12,
-                    className="col-12 pt-4",
+                    lg=7,
+                    className="pt-4",
                 ),
             ],
             className="ms-1",
@@ -845,7 +861,6 @@ app.layout = dbc.Container(
     ],
     fluid=True,
 )
-
 
 """
 ==========================================================================
