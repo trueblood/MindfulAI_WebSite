@@ -107,12 +107,13 @@ datasource_text = dcc.Markdown(
     Business
     """
 )
+# Markdown component to display the selected exercise
+asset_allocation_text = dcc.Markdown(id="asset_allocation_text")
 
-asset_allocation_text = dcc.Markdown(
-    """
-> **Suggested Mindfulness Exercise ** 
-"""
-)
+# asset_allocation_text = dcc.Markdown(
+#     """
+# """
+# )
 
 learn_text = dcc.Markdown(
     """
@@ -1283,34 +1284,6 @@ def update_chart_on_feedback(value):
 
 #     return fig
 
-# Callback to update the leaderboard based on feedback rating selection
-@app.callback(
-    Output('leaderboard_table', 'data'),
-    Input('time_period', 'value')
-)
-def update_leaderboard_table(rating):
-    global df_leaderboard
-    if rating == 0:
-        # No update if the rating is 0
-        return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
-    
-    # Adjust the Q-value based on the rating
-    for i in range(len(df_leaderboard)):
-        if rating >= 3:
-            # Increase Q-value slightly if the rating is 3 or above
-            df_leaderboard.at[i, 'Q-Value'] += 0.02
-        elif rating > 0:
-            # Decrease Q-value slightly if the rating is below 3
-            df_leaderboard.at[i, 'Q-Value'] -= 0.02
-    
-    # Ensure Q-values stay within valid bounds (0.0 to 1.0)
-    df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].clip(0.0, 1.0)
-    # Format the Q-Value column to show values up to the thousandths place
-    df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].round(3)
-    
-    # Sort by Q-Value in descending order to display the highest Q-value first
-    return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
-
 # populate mindfulness exercise
 @app.callback(
     Output(asset_allocation_text, "children"),
@@ -1338,9 +1311,90 @@ def update_mindfulness_exercise(*args):
         selected_exercise = "No matching exercises found."
 
     # Update the Markdown with the selected exercise
-    return f"""
-    > **Suggested Mindfulness Exercise:** {selected_exercise}
-    """
+    return f"""{selected_exercise}"""
+
+
+
+
+# Callback to update the leaderboard based on feedback rating selection
+@app.callback(
+    Output('leaderboard_table', 'data'),
+    Input('time_period', 'value'),
+    State('asset_allocation_text', 'children'),
+    prevent_initial_call=True
+)
+def update_leaderboard_table(rating, selected_exercise_text):
+    #print("rating", rating)
+    global df_leaderboard
+    if rating == 0:
+        # No update if the rating is 0
+        return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
+    
+    selected_exercise = selected_exercise_text.strip()
+
+    # Get the start_yr value based on the rating index
+    start_yr = mindfulness_feedback_scale[rating]["start_yr"]
+
+    exercise_index = df_leaderboard[df_leaderboard['Exercise'] == selected_exercise].index
+
+    print("exercise_index", exercise_index)
+#    selected_exercise = asset_allocation_text.children
+  #  selected_exercise = asset_allocation_text
+
+  #  print("selected_exercise", selected_exercise)
+
+
+ #   print("start_yr", start_yr)
+    if not exercise_index.empty:
+        exercise_index = exercise_index[0]  # Safely get the first index if it exists
+
+        if start_yr == 0:
+            # No update if the start_yr is 0
+            return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
+
+        # Adjust the Q-value based on the start_yr value
+        if start_yr >= 3:
+            # Increase Q-value slightly if the rating is 3 or above
+            df_leaderboard.at[exercise_index, 'Q-Value'] += 0.02 * (start_yr - 2)
+        else:
+            # Decrease Q-value slightly if the rating is below 3
+            df_leaderboard.at[exercise_index, 'Q-Value'] -= 0.02 * (3 - start_yr)
+
+        # Ensure Q-values stay within valid bounds (0.0 to 1.0)
+        df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].clip(0.0, 1.0)
+        # Format the Q-Value column to show values up to the thousandths place
+        df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].round(3)
+
+
+    # if start_yr == 0:
+    #     # No update if the start_yr is 0
+    #     return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
+
+    # # Adjust the Q-value based on the start_yr value
+    # if start_yr >= 3:
+    #     # Increase Q-value slightly if the rating is 3 or above
+    #     df_leaderboard.at[exercise_index, 'Q-Value'] += 0.02 * (start_yr - 2)
+    # else:
+    #     # Decrease Q-value slightly if the rating is below 3
+    #     df_leaderboard.at[exercise_index, 'Q-Value'] -= 0.02 * (3 - start_yr)
+
+
+    # # Adjust the Q-value based on the rating
+    # for i in range(len(df_leaderboard)):
+    #     if rating >= 3:
+    #         # Increase Q-value slightly if the rating is 3 or above
+    #         df_leaderboard.at[i, 'Q-Value'] += 0.02
+    #     elif rating > 0:
+    #         # Decrease Q-value slightly if the rating is below 3
+    #         df_leaderboard.at[i, 'Q-Value'] -= 0.02
+    
+    # # Ensure Q-values stay within valid bounds (0.0 to 1.0)
+    # df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].clip(0.0, 1.0)
+    # # Format the Q-Value column to show values up to the thousandths place
+    # df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].round(3)
+    
+    # Sort by Q-Value in descending order to display the highest Q-value first
+    return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
 
 # Remember to mention
 """
