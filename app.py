@@ -22,6 +22,7 @@ import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+import os
 
 # Sample Data Preparation
 np.random.seed(42)
@@ -134,16 +135,58 @@ learn_text = dcc.Markdown(
 
     Our system captures users' emotional expressions from facial images and location data. These are processed through a Convolutional Neural Network (CNN) and a Text Embedding Model to generate vector embeddings. These vectors are then sent to our API and stored in the **TiDB Serverless Database**.
 
+    #### Showcasing Data Types and Benefits
+
+    Our application stores a variety of data types in TiDB, from user emotional expressions to exercise feedback. TiDB Serverless supports our need for quick, efficient, and cost-effective data handling, allowing us to focus on enhancing user experience and expanding our service capabilities without compromising performance.
+    
     ## Reinforcement Learning Model
 
     Our Reinforcement Learning (RL) model employs a hybrid of **on-policy** and **off-policy** methods. It activates and selects the optimal mindfulness exercise by integrating current state assessments with historical data and vector semantic search queries within TiDB.
 
-    ### Q-Learning
+    ### Q-Learning with TiDB Integration
 
-    The model utilizes **Q-Learning**, an algorithm designed to predict the best action in a given situation to maximize reward. Feedback from users on the suggested exercises is used to adjust the Q-values in the database, refining future recommendations. If no feedback is received, the Q-value remains unchanged.
+    The model utilizes **Q-Learning**, an algorithm designed to predict the best action in a given situation to maximize reward. Feedback from users on the suggested exercises is used to adjust the Q-values in the TiDB Serverless Database, refining future recommendations. If no feedback is received, the Q-value remains unchanged.
+
+    #### Our Policy Using TiDB Vector Semantic Search
+
+    We employ TiDB Vector Semantic Search for its ability to handle high data volumes and for fast query data retrieval, which ensures that our agent swiftly identifies the best possible action for each user scenario.
+
+     #### Semantic Search in TiDB Serverless
+
+    TiDB Serverless enhances our application by offering quick scalability and responsive query times, crucial for handling AI workloads and traditional data processing tasks alike. This makes it an indispensable part of our AI-driven application.
+
+    ---
+
+    #### What is a Reinforcement Learning Model?
+
+    A reinforcement learning model involves training an agent (in our case, the system itself) to make sequences of decisions. The agent learns to achieve a goal in an uncertain, potentially complex environment. In our project, the agent decides the most suitable mindfulness exercise based on the user's current emotional state.
+
+    #### What is a CNN Model?
+
+    A Convolutional Neural Network (CNN) is a type of deep learning algorithm primarily used for processing data with a grid-like topology, such as images. CNNs excel in tasks like image recognition and classification by extracting features through layers of filters and pooling operations, enabling them to identify patterns effectively.
+
+    #### What is a Text Embedding Model?
+
+    A Text Embedding Model transforms text into numerical vectors that capture semantic meaning. Commonly used in natural language processing (NLP), these models enable machines to perform complex text-related tasks like sentiment analysis and text classification by understanding context and relationships within the text.
+    
+    #### Vectors, Vector Index, and Vector Embeddings
+
+    Vectors are numerical representations of data, which we use extensively in our project. We store these vectors in TiDB, utilizing its vector indexing capabilities to efficiently perform semantic searches that match users' emotional states with appropriate mindfulness exercises.
+    
+    #### What is Semantic Vector Search?
+
+    Semantic Vector Search uses vector embeddings to enhance search accuracy by finding content based on semantic similarities. This approach allows for more relevant results by understanding the underlying meanings in the data.
+
+    #### Additional Resources
+
+    - [Download the Workflow PDF](/assets/Documents_EmbraceAIWorkFlow.pdf) for a detailed overview of our AI swarm process along with how we integrate TiDB into our solution.
+    - Explore our GitHub repositories to see the code and contribute to the projects:
+    - [Embrace AI Website](https://github.com/trueblood/MindfulAI_WebSite)
+    - [Embrace CNN](https://github.com/trueblood/EmbracePath_AI)
+    - [TiDB Data Assistant API](https://github.com/trueblood/TiDB_Data_Assistant)
+    - [Embrace Dog Wagon RL AI](https://github.com/trueblood/Dog_Wagon_AI)
     """
 )
-
 
 cagr_text = dcc.Markdown(
     """
@@ -755,10 +798,9 @@ learn_card = dbc.Card(
         dbc.CardBody(
             html.Div(
                 learn_text,
-                style={"overflow": "scroll", "height": "300px"}
+                style={"overflow": "scroll", "height": "700px"}
             )
-        ),
-        dbc.CardImg(src=app.get_asset_url("images/learn/qlearning.png"), top=True)
+        )
     ],
     className="mt-4",
 )
@@ -1630,5 +1672,7 @@ Data Points: Timestamped entries showing data updates, queries per second, and a
 #     app.run_server(debug=True)
 
 
-if __name__ == "__main__":
-    app.run_server(debug=True, port=8051)
+if __name__ == '__main__':
+    # Dynamically bind to the port provided by Cloud Run
+    port = int(os.environ.get('PORT', 8080))
+    app.run(debug=True, host='0.0.0.0', port=port)
