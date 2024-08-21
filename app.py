@@ -23,6 +23,43 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import os
+import requests
+import os
+
+BASE_URL = os.environ.get("BASE_URL")
+api_key = os.environ.get("API_KEY")
+
+def insert_emotion_cnn_ai_training(data):
+    url = f"{BASE_URL}/api/insert_emotion_cnn_ai_training"
+    headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
+    response = requests.post(url, json=data, headers=headers)
+    return response.json()
+
+def insert_encoding_model_training(data):
+    url = f"{BASE_URL}/api/insert_encoding_model_training"
+    response = requests.post(url, json=data, headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'})
+    return response.json()
+
+def get_feedback_by_user(user_id):
+    url = f"{BASE_URL}/api/get_feedback_by_user/{user_id}"
+    response = requests.get(url, headers={'Authorization': f'Bearer {api_key}'})
+    return response.json()
+
+def get_feedback_rating_options():
+    url = f"{BASE_URL}/api/get_feedback_rating_options"
+    response = requests.get(url, headers={'Authorization': f'Bearer {api_key}'})
+    return response.json()
+
+def get_rl_training_info():
+    url = f"{BASE_URL}/api/get_rl_training_info"
+    response = requests.get(url, headers={'Authorization': f'Bearer {api_key}'})
+    return response.json()
+
+def insert_rl_training_info(data):
+    url = f"{BASE_URL}/api/insert_rl_training_info"
+    response = requests.post(url, json=data, headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'})
+    return response.json()
+
 
 # Sample Data Preparation
 np.random.seed(42)
@@ -89,25 +126,9 @@ df = (
 )
 
 COLORS = {
-    "cash": "#3cb521",
-    "bonds": "#fd7e14",
-    "stocks": "#446e9b",
-    "inflation": "#cd0200",
     "background": "whitesmoke",
 }
 
-"""
-==========================================================================
-Markdown Text
-"""
-
-datasource_text = dcc.Markdown(
-    """
-    [Data source:](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html)
-    Historical Returns on Stocks, Bonds and Bills from NYU Stern School of
-    Business
-    """
-)
 # Markdown component to display the selected exercise
 asset_allocation_text = dcc.Markdown(id="asset_allocation_text")
 asset_allocation_card = dbc.Card(
@@ -122,12 +143,6 @@ asset_allocation_card = dbc.Card(
     ],
     className="mt-2",
 )
-
-# asset_allocation_text = dcc.Markdown(
-#     """
-# """
-# )
-
 
 learn_text = dcc.Markdown(
     """
@@ -188,14 +203,6 @@ learn_text = dcc.Markdown(
     """
 )
 
-cagr_text = dcc.Markdown(
-    """
-    (CAGR) is the compound annual growth rate.  It measures the rate of return for an investment over a period of time, 
-    such as 5 or 10 years. The CAGR is also called a "smoothed" rate of return because it measures the growth of
-     an investment as if it had grown at a steady rate on an annually compounded basis.
-    """
-)
-
 footer = html.Div(
     dcc.Markdown(
         """
@@ -205,253 +212,6 @@ footer = html.Div(
     ),
     className="p-2 mt-5 bg-primary text-white small",
 )
-
-"""
-==========================================================================
-Tables
-"""
-
-total_returns_table = dash_table.DataTable(
-    id="total_returns",
-    columns=[{"id": "Year", "name": "Year", "type": "text"}]
-    + [
-        {"id": col, "name": col, "type": "numeric", "format": {"specifier": "$,.0f"}}
-        for col in ["Cash", "Bonds", "Stocks", "Total"]
-    ],
-    page_size=15,
-    style_table={"overflowX": "scroll"},
-)
-
-annual_returns_pct_table = dash_table.DataTable(
-    id="annual_returns_pct",
-    columns=(
-        [{"id": "Year", "name": "Year", "type": "text"}]
-        + [
-            {"id": col, "name": col, "type": "numeric", "format": {"specifier": ".1%"}}
-            for col in df.columns[1:]
-        ]
-    ),
-    data=df.to_dict("records"),
-    sort_action="native",
-    page_size=15,
-    style_table={"overflowX": "scroll"},
-)
-
-
-def make_summary_table(dff):
-    """Make html table to show cagr and  best and worst periods"""
-
-    table_class = "h5 text-body text-nowrap"
-    cash = html.Span(
-        [html.I(className="fa fa-money-bill-alt"), " Cash"], className=table_class
-    )
-    bonds = html.Span(
-        [html.I(className="fa fa-handshake"), " Bonds"], className=table_class
-    )
-    stocks = html.Span(
-        [html.I(className="fa fa-industry"), " Stocks"], className=table_class
-    )
-    inflation = html.Span(
-        [html.I(className="fa fa-ambulance"), " Inflation"], className=table_class
-    )
-
-    start_yr = dff["Year"].iat[0]
-    end_yr = dff["Year"].iat[-1]
-
-    df_table = pd.DataFrame(
-        {
-            "": [cash, bonds, stocks, inflation],
-            f"Rate of Return (CAGR) from {start_yr} to {end_yr}": [
-                cagr(dff["all_cash"]),
-                cagr(dff["all_bonds"]),
-                cagr(dff["all_stocks"]),
-                cagr(dff["inflation_only"]),
-            ],
-            f"Worst 1 Year Return": [
-                worst(dff, "3-mon T.Bill"),
-                worst(dff, "10yr T.Bond"),
-                worst(dff, "S&P 500"),
-                "",
-            ],
-        }
-    )
-    return dbc.Table.from_dataframe(df_table, bordered=True, hover=True)
-
-
-"""
-==========================================================================
-Figures
-"""
-
-
-def make_pie(slider_input, title):
-    fig = go.Figure(
-        data=[
-            go.Pie(
-                labels=["Cash", "Bonds", "Stocks"],
-                values=slider_input,
-                textinfo="label+percent",
-                textposition="inside",
-                marker={"colors": [COLORS["cash"], COLORS["bonds"], COLORS["stocks"]]},
-                sort=False,
-                hoverinfo="none",
-            )
-        ]
-    )
-    fig.update_layout(
-        title_text=title,
-        title_x=0.5,
-        margin=dict(b=25, t=75, l=35, r=25),
-        height=325,
-        paper_bgcolor=COLORS["background"],
-    )
-    return fig
-
-
-def make_line_chart(dff):
-    start = dff.loc[1, "Year"]
-    yrs = dff["Year"].size - 1
-    dtick = 1 if yrs < 16 else 2 if yrs in range(16, 30) else 5
-
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"],
-            y=dff["all_cash"],
-            name="All Cash",
-            marker_color=COLORS["cash"],
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"],
-            y=dff["all_bonds"],
-            name="All Bonds (10yr T.Bonds)",
-            marker_color=COLORS["bonds"],
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"],
-            y=dff["all_stocks"],
-            name="All Stocks (S&P500)",
-            marker_color=COLORS["stocks"],
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"],
-            y=dff["Total"],
-            name="My Portfolio",
-            marker_color="black",
-            line=dict(width=6, dash="dot"),
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"],
-            y=dff["inflation_only"],
-            name="Inflation",
-            visible=True,
-            marker_color=COLORS["inflation"],
-        )
-    )
-    fig.update_layout(
-        title=f"Returns for {yrs} years starting {start}",
-        template="none",
-        showlegend=True,
-        legend=dict(x=0.01, y=0.99),
-        height=400,
-        margin=dict(l=40, r=10, t=60, b=55),
-        yaxis=dict(tickprefix="$", fixedrange=True),
-        xaxis=dict(title="Year Ended", fixedrange=True, dtick=dtick),
-    )
-    return fig
-
-
-"""
-==========================================================================
-Make Tabs
-"""
-
-# Create the card component containing the graph
-# model_feedback_performance_card = dbc.Card(
-#     [
-#         dbc.CardHeader("Real-Time Model Feedback Performance"),
-#         dbc.CardBody([
-#             dcc.Graph(id='real-time-model-performance-graph'),
-#             dcc.Interval(
-#                 id='interval-component',
-#                 interval=10*1000,  # 10 seconds interval
-#                 n_intervals=0
-#             )
-#         ])
-#     ],
-#     className="mt-4",
-# )
-
-
-# =======Play tab components
-
-#asset_allocation_card = dbc.Card(asset_allocation_text, className="mt-2")
-
-
-slider_card = dbc.Card(
-    [
-        html.H4("First set cash allocation %:", className="card-title"),
-        dcc.Slider(
-            id="cash",
-            marks={i: f"{i}%" for i in range(0, 101, 10)},
-            min=0,
-            max=100,
-            step=5,
-            value=10,
-            included=False,
-        ),
-        html.H4(
-            "Then set stock allocation % ",
-            className="card-title mt-3",
-        ),
-        html.Div("(The rest will be bonds)", className="card-title"),
-        dcc.Slider(
-            id="stock_bond",
-            marks={i: f"{i}%" for i in range(0, 91, 10)},
-            min=0,
-            max=90,
-            step=5,
-            value=50,
-            included=False,
-        ),
-    ],
-    body=True,
-    className="mt-4",
-)
-
-# feedback_leaderboard_table = dbc.Card(
-#     [
-#         html.H4("Feedback Leaderboard", className="card-title text-center mt-3"),
-#         dash_table.DataTable(
-#             id='leaderboard_table',
-#             columns=[{"name": col, "id": col} for col in df_leaderboard.columns],
-#             data=df_leaderboard.to_dict('records'),
-#             style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
-#             style_cell={'textAlign': 'left'},
-#             style_data_conditional=[
-#                 {
-#                     'if': {'filter_query': '{Source} = "user_feedback_for_that_user"'},
-#                     'backgroundColor': 'rgb(220, 220, 220)'
-#                 },
-#                 {
-#                     'if': {'filter_query': '{Source} = "recommended_table"'},
-#                     'backgroundColor': 'rgb(245, 245, 245)'
-#                 }
-#             ],
-#             page_size=10
-#         ),
-#     ],
-#     body=True,
-#     className="mt-4",
-# )
 
 feedback_leaderboard_table = dbc.Card(
     [
@@ -502,36 +262,6 @@ feedback_leaderboard_table = dbc.Card(
     }
 )
 
-
-time_period_data = [
-    {
-        "label": f"2007-2008: Great Financial Crisis to {MAX_YR}",
-        "start_yr": 2007,
-        "planning_time": MAX_YR - START_YR + 1,
-    },
-    {
-        "label": "1999-2010: The decade including 2000 Dotcom Bubble peak",
-        "start_yr": 1999,
-        "planning_time": 10,
-    },
-    {
-        "label": "1969-1979:  The 1970s Energy Crisis",
-        "start_yr": 1970,
-        "planning_time": 10,
-    },
-    {
-        "label": "1929-1948:  The 20 years following the start of the Great Depression",
-        "start_yr": 1929,
-        "planning_time": 20,
-    },
-    {
-        "label": f"{MIN_YR}-{MAX_YR}",
-        "start_yr": "1928",
-        "planning_time": MAX_YR - MIN_YR + 1,
-    },
-]
-
-
 mindfulness_feedback_scale = [
         {
         "label": "5: Very Helpful - Exercise perfectly suited for the situation and fully relieved stress",
@@ -565,8 +295,6 @@ mindfulness_feedback_scale = [
     }
 ]
 
-
-
 time_period_card = dbc.Card(
     [
         html.H5(
@@ -588,113 +316,6 @@ time_period_card = dbc.Card(
     className="mt-4",
 )
 
-
-
-# ======= InputGroup components
-
-start_amount = dbc.InputGroup(
-    [
-        dbc.InputGroupText("Start Amount $"),
-        dbc.Input(
-            id="starting_amount",
-            placeholder="Min $10",
-            type="number",
-            min=10,
-            value=10000,
-        ),
-    ],
-    className="mb-3",
-)
-start_year = dbc.InputGroup(
-    [
-        dbc.InputGroupText("Start Year"),
-        dbc.Input(
-            id="start_yr",
-            placeholder=f"min {MIN_YR}   max {MAX_YR}",
-            type="number",
-            min=MIN_YR,
-            max=MAX_YR,
-            value=START_YR,
-        ),
-    ],
-    className="mb-3",
-)
-number_of_years = dbc.InputGroup(
-    [
-        dbc.InputGroupText("Number of Years:"),
-        dbc.Input(
-            id="planning_time",
-            placeholder="# yrs",
-            type="number",
-            min=1,
-            value=MAX_YR - START_YR + 1,
-        ),
-    ],
-    className="mb-3",
-)
-end_amount = dbc.InputGroup(
-    [
-        dbc.InputGroupText("Ending Amount"),
-        dbc.Input(id="ending_amount", disabled=True, className="text-black"),
-    ],
-    className="mb-3",
-)
-rate_of_return = dbc.InputGroup(
-    [
-        dbc.InputGroupText(
-            "Rate of Return(CAGR)",
-            id="tooltip_target",
-            className="text-decoration-underline",
-        ),
-        dbc.Input(id="cagr", disabled=True, className="text-black"),
-        dbc.Tooltip(cagr_text, target="tooltip_target"),
-    ],
-    className="mb-3",
-)
-
-input_groups = html.Div(
-    [start_year],
-    className="mt-4 p-4",
-    style={"display": "none"} 
-)
-
-
-# =====  Results Tab components
-
-results_card = dbc.Card(
-    [
-        dbc.CardHeader("My Portfolio Returns - Rebalanced Annually"),
-        html.Div(total_returns_table),
-    ],
-    className="mt-4",
-)
-
-# emotion_cards = html.Div(
-#     dbc.Row(
-#         [
-#             dbc.Col(
-#                 dbc.Card(
-#                     [
-#                         dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
-#                         dbc.CardBody([
-#                             html.Hr(),
-#                             html.H4(f"{emotion['name']} Card", className="card-title center-text"),
-#                             html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
-#                         ])
-#                     ],
-#                     id=f"{emotion['name']}",
-#                     style={"width": "18rem", "margin": "auto"},
-#                     className="clickable-card",
-#                     n_clicks=0
-#                 ),
-#                 md=4
-#             ) for emotion in emotions
-#         ],
-#         justify="around"
-#     ),
-#     style={'margin-top': '20px'}
-# )
-
 emotion_cards = html.Div(
     dbc.Row(
         [
@@ -714,24 +335,12 @@ emotion_cards = html.Div(
                                         "Click on card to classify emotion."  # Second line
                                     ],
                                     className="card-text center-text",
-                                    # style={
-                                    #     "font-size": "14px",  # Adjust font size as needed
-                                    #     "text-align": "center", 
-                                    #     "white-space": "normal",  # Allow wrapping to multiple lines
-                                    #     "margin": "0"  # Optional: adjust margins for better spacing
-                                    # }
                                 ),
                                 html.P(
                                     [
                                         f"Location: {emotion['location']}"  # Second line
                                     ],
                                     className="card-text center-text",
-                                    # style={
-                                    #     "font-size": "14px",  # Adjust font size as needed
-                                    #     "text-align": "center", 
-                                    #     "white-space": "normal",  # Allow wrapping to multiple lines
-                                    #     "margin": "0"  # Optional: adjust margins for better spacing
-                                    # }
                                 )
                             ])
                         ],
@@ -749,48 +358,6 @@ emotion_cards = html.Div(
     style={'margin-top': '20px'}
 )
 
-
-
-
-# emotion_cards =html.Div(
-#     dbc.Row(
-#         [
-#             dbc.Col(
-#                 dbc.Button(  # Use Button to wrap the Card for click functionality
-#                     dbc.Card(
-#                         [
-#                             dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
-#                             dbc.CardBody([
-#                                 html.Hr(),
-#                                 html.H4(f"{emotion['name']} Card", className="card-title center-text"),
-#                                 html.P(f"This is the {emotion['name'].lower()} emotion.", className="card-text center-text"),
-#                             ])
-#                         ],
-#                       #  style={"width": "18rem", "margin": "auto"}
-#                     ),
-#                     id=f"{emotion['name']}",  # Assign ID to Button instead of Card
-#                     #style={"padding": "0", "border": "none", "background": "none"},  # Make Button invisible
-#                     style={"width": "18rem", "margin": "auto"},
-#                     className="clickable-card",
-#                     n_clicks=0
-#                 ),
-#                 md=4
-#             ) for emotion in emotions
-#         ],
-#         justify="around"
-#     ),
-#     style={'margin-top': '20px'}
-# )
-
-data_source_card = dbc.Card(
-    [
-        dbc.CardHeader("Source Data: Annual Total Returns"),
-        html.Div(annual_returns_pct_table),
-    ],
-    className="mt-4",
-)
-
-
 # ========= Learn Tab  Components
 learn_card = dbc.Card(
     [
@@ -805,7 +372,6 @@ learn_card = dbc.Card(
     className="mt-4",
 )
 
-
 # ========= Build tabs
 tabs = dbc.Tabs(
     [
@@ -816,158 +382,12 @@ tabs = dbc.Tabs(
             label="Play",
             className="pb-4",
         )
-      #  dbc.Tab([results_card, data_source_card], tab_id="tab-3", label="Results"),
     ],
     id="tabs",
     active_tab="tab-2",
     className="mt-2",
 )
 
-
-"""
-==========================================================================
-Helper functions to calculate investment results, cagr and worst periods
-"""
-
-
-def backtest(stocks, cash, start_bal, nper, start_yr):
-    """calculates the investment returns for user selected asset allocation,
-    rebalanced annually and returns a dataframe
-    """
-
-    end_yr = start_yr + nper - 1
-    cash_allocation = cash / 100
-    stocks_allocation = stocks / 100
-    bonds_allocation = (100 - stocks - cash) / 100
-
-    # Select time period - since data is for year end, include year prior
-    # for start ie year[0]
-    dff = df[(df.Year >= start_yr - 1) & (df.Year <= end_yr)].set_index(
-        "Year", drop=False
-    )
-    dff["Year"] = dff["Year"].astype(int)
-
-    # add columns for My Portfolio returns
-    dff["Cash"] = cash_allocation * start_bal
-    dff["Bonds"] = bonds_allocation * start_bal
-    dff["Stocks"] = stocks_allocation * start_bal
-    dff["Total"] = start_bal
-    dff["Rebalance"] = True
-
-    # calculate My Portfolio returns
-    for yr in dff.Year + 1:
-        if yr <= end_yr:
-            # Rebalance at the beginning of the period by reallocating
-            # last period's total ending balance
-            if dff.loc[yr, "Rebalance"]:
-                dff.loc[yr, "Cash"] = dff.loc[yr - 1, "Total"] * cash_allocation
-                dff.loc[yr, "Stocks"] = dff.loc[yr - 1, "Total"] * stocks_allocation
-                dff.loc[yr, "Bonds"] = dff.loc[yr - 1, "Total"] * bonds_allocation
-
-            # calculate this period's  returns
-            dff.loc[yr, "Cash"] = dff.loc[yr, "Cash"] * (
-                1 + dff.loc[yr, "3-mon T.Bill"]
-            )
-            dff.loc[yr, "Stocks"] = dff.loc[yr, "Stocks"] * (1 + dff.loc[yr, "S&P 500"])
-            dff.loc[yr, "Bonds"] = dff.loc[yr, "Bonds"] * (
-                1 + dff.loc[yr, "10yr T.Bond"]
-            )
-            dff.loc[yr, "Total"] = dff.loc[yr, ["Cash", "Bonds", "Stocks"]].sum()
-
-    dff = dff.reset_index(drop=True)
-    columns = ["Cash", "Stocks", "Bonds", "Total"]
-    dff[columns] = dff[columns].round(0)
-
-    # create columns for when portfolio is all cash, all bonds or  all stocks,
-    #   include inflation too
-    #
-    # create new df that starts in yr 1 rather than yr 0
-    dff1 = (dff[(dff.Year >= start_yr) & (dff.Year <= end_yr)]).copy()
-    #
-    # calculate the returns in new df:
-    columns = ["all_cash", "all_bonds", "all_stocks", "inflation_only"]
-    annual_returns = ["3-mon T.Bill", "10yr T.Bond", "S&P 500", "Inflation"]
-    for col, return_pct in zip(columns, annual_returns):
-        dff1[col] = round(start_bal * (1 + (1 + dff1[return_pct]).cumprod() - 1), 0)
-    #
-    # select columns in the new df to merge with original
-    dff1 = dff1[["Year"] + columns]
-    dff = dff.merge(dff1, how="left")
-    # fill in the starting balance for year[0]
-    dff.loc[0, columns] = start_bal
-    return dff
-
-
-def cagr(dff):
-    """calculate Compound Annual Growth Rate for a series and returns a formated string"""
-
-    start_bal = dff.iat[0]
-    end_bal = dff.iat[-1]
-    planning_time = len(dff) - 1
-    cagr_result = ((end_bal / start_bal) ** (1 / planning_time)) - 1
-    return f"{cagr_result:.1%}"
-
-
-def worst(dff, asset):
-    """calculate worst returns for asset in selected period returns formated string"""
-
-    worst_yr_loss = min(dff[asset])
-    worst_yr = dff.loc[dff[asset] == worst_yr_loss, "Year"].iloc[0]
-    return f"{worst_yr_loss:.1%} in {worst_yr}"
-
-
-"""
-===========================================================================
-Main Layout
-"""
-# app.layout = dbc.Container(
-#     [
-#         dbc.Row(
-#             dbc.Col(
-#                 html.H2(
-#                     "Mindful AI",
-#                     className="text-center bg-primary text-white p-2",
-#                 ),
-#             )
-#         ),
-#     dbc.Row(
-#         dbc.Col(
-#             html.Div([
-#          #       html.H1("Emotion Cards", className="text-center"),  # Center the title
-#                 emotion_cards
-#             ], className="text-center"),  # Center the content within the div
-#             #width={"size": 10, "offset": 1}  # Adjust the size and offset to center the column
-#         ),
-#         justify="center",  # Ensures the row content is centered
-#         align="center",  # Vertically centers the row content
-#         className="h-100"  # Make sure the row takes full height if needed
-#     ),
-#         dbc.Row(
-#             [
-
-
-
-
-#                 dbc.Col(tabs, width=12, lg=5, className="mt-4 border"),
-#                 dbc.Col(
-#                     [
-#                         dcc.Graph(id="allocation_pie_chart", className="mb-2"),
-#                         dcc.Graph(id="returns_chart", className="pb-4"),
-#                         html.Hr(),
-#                         html.Div(id="summary_table"),
-#                         html.H6(datasource_text, className="my-2"),
-#                         dcc.Graph(id="live_graph")
-#                     ],
-#                     width=12,
-#                     className="col-12 pt-4",
-#                 ),
-#             ],
-#             className="ms-1",
-#         ),
-#         dbc.Row(dbc.Col(footer)),
-#     ],
-#     fluid=True,
-# )
 app.layout = dbc.Container(
     [
         dbc.Row(
@@ -999,12 +419,7 @@ app.layout = dbc.Container(
                     [
                         dcc.Graph(id="live_graph"),
                         dcc.Graph(id='training_time_bar_chart'),
-                      #  dcc.Graph(id="allocation_pie_chart", className="mb-2"),
-                       # dcc.Graph(id="returns_chart", className="pb-4"),
-                       # html.Hr(),
                         html.Div(id="summary_table"),
-                     #   html.H6(datasource_text, className="my-2")
-                     
                     ],
                     width=12,
                     lg=7,
@@ -1040,46 +455,6 @@ def highlight_active_card(*args):
         for emotion in emotions
     ]
 
-# @app.callback(
-#     Output("allocation_pie_chart", "figure"),
-#     Input("stock_bond", "value"),
-#     Input("cash", "value"),
-# )
-# def update_pie(stocks, cash):
-#     bonds = 100 - stocks - cash
-#     slider_input = [cash, bonds, stocks]
-
-#     if stocks >= 70:
-#         investment_style = "Aggressive"
-#     elif stocks <= 30:
-#         investment_style = "Conservative"
-#     else:
-#         investment_style = "Moderate"
-#     figure = make_pie(slider_input, investment_style + " Asset Allocation")
-#     return figure
-
-
-# @app.callback(
-#     Output("stock_bond", "max"),
-#     Output("stock_bond", "marks"),
-#     Output("stock_bond", "value"),
-#     Input("cash", "value"),
-#     State("stock_bond", "value"),
-# )
-# def update_stock_slider(cash, initial_stock_value):
-#     max_slider = 100 - int(cash)
-#     stocks = min(max_slider, initial_stock_value)
-
-#     # formats the slider scale
-#     if max_slider > 50:
-#         marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 10)}
-#     elif max_slider <= 15:
-#         marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 1)}
-#     else:
-#         marks_slider = {i: f"{i}%" for i in range(0, max_slider + 1, 5)}
-#     return max_slider, marks_slider, stocks
-
-
 @app.callback(
     Output("start_yr", "value"),
     Output("time_period", "value"),
@@ -1090,55 +465,8 @@ def update_time_period(start_yr, period_number):
     """syncs inputs and selected time periods"""
     ctx = callback_context
     input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-
-
     start_yr = 2007
-
     return start_yr, period_number
-
-
-# @app.callback(
-#     Output("total_returns", "data"),
-#     Output("returns_chart", "figure"),
-#     Output("summary_table", "children"),
-#     Output("ending_amount", "value"),
-#     Output("cagr", "value"),
-#     Input("stock_bond", "value"),
-#     Input("cash", "value"),
-#     Input("starting_amount", "value"),
-#     Input("planning_time", "value"),
-#     Input("start_yr", "value"),
-# )
-# def update_totals(stocks, cash, start_bal, planning_time, start_yr):
-#     # set defaults for invalid inputs
-#     start_bal = 10 if start_bal is None else start_bal
-#     planning_time = 1 if planning_time is None else planning_time
-#     start_yr = MIN_YR if start_yr is None else int(start_yr)
-
-#     # calculate valid planning time start yr
-#     max_time = MAX_YR + 1 - start_yr
-#     planning_time = min(max_time, planning_time)
-#     if start_yr + planning_time > MAX_YR:
-#         start_yr = min(df.iloc[-planning_time, 0], MAX_YR)  # 0 is Year column
-
-#     # create investment returns dataframe
-#     dff = backtest(stocks, cash, start_bal, planning_time, start_yr)
-
-#     # create data for DataTable
-#     data = dff.to_dict("records")
-
-#     # create the line chart
-#     fig = make_line_chart(dff)
-
-#     summary_table = make_summary_table(dff)
-
-#     # format ending balance
-#     ending_amount = f"${dff['Total'].iloc[-1]:0,.0f}"
-
-#     # calcluate cagr
-#     ending_cagr = cagr(dff["Total"])
-
-#     return data, fig, summary_table, ending_amount, ending_cagr
 
 @app.callback(
     [Output(f"{emotion['name']}", "children") for emotion in emotions],
@@ -1169,23 +497,10 @@ def update_card_content(*args):
                     )
                 ])
             ],
-        #    style={"width": "18rem", "margin": "auto", "padding": "0", "border": "none", "background": "none"}
         ) for emotion in emotions
     ]
     
     return updated_cards
-
-    # return [
-    #     dbc.Card(
-    #         [
-    #             dbc.CardImg(src=app.get_asset_url(emotion['image']), top=True, style={"padding": "10px"}),
-    #             dbc.CardBody([
-    #                 html.Hr(),
-    #                 html.P(f"This is the {emotion['name'].lower()} emotion." if emotion['name'].lower() == button_id else "Click on card to classify emotion.", className="card-text center-text")
-    #             ])
-    #         ],
-    #     ) for emotion in emotions
-    # ]
 
 # Callback to update the graph based on selected radio item
 @app.callback(
@@ -1245,7 +560,6 @@ def generate_data_training_time_data():
         'vector_search_records': [random.randint(5000, 7000) for _ in range(10)]  # Vector search subset
     }
     return data
-
 
 data_training_time = generate_data_training_time_data()
 
@@ -1311,61 +625,6 @@ def update_chart_on_feedback(value):
     )
 
     return fig
-# @app.callback(
-#     Output("training_time_bar_chart", "figure"),
-#     Input("training_time_bar_chart", "id")  # Triggers on app load
-# )
-# def create_chart(_):
-#     data = data_training_time
-
-#     fig = go.Figure()
-
-#     # Data Volume and Vector Search Records with tooltips including additional info
-#     fig.add_trace(go.Bar(
-#         x=data['iteration'],
-#         y=data['data_volume'],
-#         name='Data Volume (records)',
-#         marker_color='green',
-#         hovertemplate=(
-#             'Iteration: %{x}<br>' +
-#             'Data Volume: %{y} records<br>' +
-#             'CPU Usage: %{customdata[0]}%<br>' +
-#             'RAM Usage: %{customdata[1]} GB<br>' +
-#             'Fetch Time: %{customdata[2]} ms<br>' +
-#             '<extra></extra>'
-#         ),
-#         customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
-#     ))
-
-#     fig.add_trace(go.Bar(
-#         x=data['iteration'],
-#         y=data['vector_search_records'],
-#         name='Vector Search Records (records)',
-#         marker_color='orange',
-#         hovertemplate=(
-#             'Iteration: %{x}<br>' +
-#             'Vector Search Records: %{y} records<br>' +
-#             'CPU Usage: %{customdata[0]}%<br>' +
-#             'RAM Usage: %{customdata[1]} GB<br>' +
-#             'Fetch Time: %{customdata[2]} ms<br>' +
-#             '<extra></extra>'
-#         ),
-#         customdata=list(zip(data['cpu_usage'], data['ram_usage'], data['fetch_time']))
-#     ))
-
-#     # Vary fetch time across grouped bars
-#     fetch_time_adjusted = [data['fetch_time'][i] + random.randint(-3, 3) for i in range(len(data['fetch_time']))]
-
-#     fig.update_layout(
-#         barmode='group',
-        
-#         title='Q-Learning Data Usage During Decision Processing',
-#         xaxis_title='Agent Episode',
-#         yaxis_title='Data Records Used',
-#         legend_title='Metrics'
-#     )
-
-#     return fig
 
 # populate mindfulness exercise
 @app.callback(
@@ -1396,9 +655,6 @@ def update_mindfulness_exercise(*args):
     # Update the Markdown with the selected exercise
     return f"""{selected_exercise}"""
 
-
-
-
 # Callback to update the leaderboard based on feedback rating selection
 @app.callback(
     Output('leaderboard_table', 'data'),
@@ -1417,17 +673,8 @@ def update_leaderboard_table(rating, selected_exercise_text):
 
     # Get the start_yr value based on the rating index
     start_yr = mindfulness_feedback_scale[rating]["start_yr"]
-
     exercise_index = df_leaderboard[df_leaderboard['Exercise'] == selected_exercise].index
-
     print("exercise_index", exercise_index)
-#    selected_exercise = asset_allocation_text.children
-  #  selected_exercise = asset_allocation_text
-
-  #  print("selected_exercise", selected_exercise)
-
-
- #   print("start_yr", start_yr)
     if not exercise_index.empty:
         exercise_index = exercise_index[0]  # Safely get the first index if it exists
 
@@ -1447,230 +694,20 @@ def update_leaderboard_table(rating, selected_exercise_text):
         df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].clip(0.0, 1.0)
         # Format the Q-Value column to show values up to the thousandths place
         df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].round(3)
-
-
-    # if start_yr == 0:
-    #     # No update if the start_yr is 0
-    #     return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
-
-    # # Adjust the Q-value based on the start_yr value
-    # if start_yr >= 3:
-    #     # Increase Q-value slightly if the rating is 3 or above
-    #     df_leaderboard.at[exercise_index, 'Q-Value'] += 0.02 * (start_yr - 2)
-    # else:
-    #     # Decrease Q-value slightly if the rating is below 3
-    #     df_leaderboard.at[exercise_index, 'Q-Value'] -= 0.02 * (3 - start_yr)
-
-
-    # # Adjust the Q-value based on the rating
-    # for i in range(len(df_leaderboard)):
-    #     if rating >= 3:
-    #         # Increase Q-value slightly if the rating is 3 or above
-    #         df_leaderboard.at[i, 'Q-Value'] += 0.02
-    #     elif rating > 0:
-    #         # Decrease Q-value slightly if the rating is below 3
-    #         df_leaderboard.at[i, 'Q-Value'] -= 0.02
-    
-    # # Ensure Q-values stay within valid bounds (0.0 to 1.0)
-    # df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].clip(0.0, 1.0)
-    # # Format the Q-Value column to show values up to the thousandths place
-    # df_leaderboard['Q-Value'] = df_leaderboard['Q-Value'].round(3)
     
     # Sort by Q-Value in descending order to display the highest Q-value first
     return df_leaderboard.sort_values(by='Q-Value', ascending=False).to_dict('records')
 
-# Remember to mention
-"""
-Real-Time Data Updates
-
-Type: Live Data Stream Graph, Stream keyword sounds good!!!!
-Purpose: Showcase the capability of TiDB to handle real-time data updates, which are crucial for the responsiveness of your RL model.
-Data Points: Timestamped entries showing data updates, queries per second, and any relevant metrics that reflect system responsiveness.
-"""
-# Generate fake data function for demonstration remember to replace with real data
-# def generate_fake_data():
-#     base_time = datetime.now()
-#     data = {
-#         "timestamp": [base_time - timedelta(minutes=15 - x) for x in range(15)],
-#         "feedback_score": [random.randint(1, 5) if random.random() > 0.2 else 'Did Not Do' for _ in range(15)]
-#     }
-#     return pd.DataFrame(data)
-
-# # Fetch latest feedback data function remember to replace with real data
-# def fetch_latest_feedback_data():
-#     return generate_fake_data()
-
-# # Callback to update the graph component
-# @app.callback(
-#     Output('real-time-model-performance-graph', 'figure'),
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_performance_graph(n):
-#     df = fetch_latest_feedback_data()
-#     df_filtered = df[df['feedback_score'] != 'Did Not Do']
-
-#     # Create the figure using plotly.graph_objects
-#     fig = go.Figure()
-#     fig.add_trace(go.Scatter(
-#         x=df_filtered['timestamp'], 
-#         y=df_filtered['feedback_score'], 
-#         mode='lines+markers',
-#         name='Feedback Score'
-#     ))
-
-#     fig.update_layout(
-#         title='Real-Time Model Feedback Performance',
-#         xaxis_title='Time',
-#         yaxis_title='Feedback Score',
-#         yaxis_range=[0,5]
-#     )
-
-#     return fig
-
-
-# Generate initial static fake data
-# base_time = datetime.now()
-# data = {
-#     "timestamp": [base_time - timedelta(minutes=x) for x in range(15)],
-#     "feedback_score": [random.randint(1, 5) for _ in range(15)]
-# }
-# df = pd.DataFrame(data)
-
-# def relative_time(x):
-#     delta = datetime.now() - x
-#     if delta.days > 0:
-#         return f"{delta.days} days ago"
-#     elif delta.seconds > 3600:
-#         return f"{delta.seconds // 3600} hours ago"
-#     else:
-#         return f"{delta.seconds // 60} minutes ago"
-
-# # Apply relative time conversion
-# df['relative_time'] = df['timestamp'].apply(relative_time)
-
-# @app.callback(
-#     Output('feedback-graph', 'figure'),
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_graph(n):
-#     fig = go.Figure()
-
-#     fig.add_trace(go.Scatter(
-#         x=df['relative_time'], 
-#         y=df['feedback_score'], 
-#         mode='lines+markers',
-#         name='Feedback Score'
-#     ))
-
-#     fig.update_layout(
-#         title='Feedback Performance Over Time',
-#         xaxis_title='Time Ago',
-#         yaxis_title='Feedback Score',
-#         yaxis=dict(range=[0, 6]),
-#         xaxis=dict(type='category')
-#     )
-
-#     return fig
-
-
-
-
-
-
-
-
-
-
-# from dash import Dash, html, dcc
-# import plotly.graph_objects as go
-# import pandas as pd
-# import sqlalchemy
-# from dash.dependencies import Input, Output
-
-# # Establish a connection to TiDB
-# engine = sqlalchemy.create_engine('mysql+pymysql://user:password@host/dbname')
-
-# app = Dash(__name__)
-
-# def fetch_query_data():
-#     query = """
-#     SELECT query_time, data_volume, response_time
-#     FROM query_log
-#     ORDER BY query_time DESC
-#     LIMIT 100
-#     """
-#     df = pd.read_sql(query, con=engine)
-#     return df
-
-# @app.callback(
-#     Output('query-data-graph', 'figure'),
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_graph(n):
-#     df = fetch_query_data()
-#     fig = go.Figure()
-#     fig.add_trace(go.Scatter(x=df['query_time'], y=df['data_volume'], name='Data Volume', mode='lines+markers'))
-#     fig.add_trace(go.Scatter(x=df['query_time'], y=df['response_time'], name='Response Time', mode='lines+markers'))
-#     fig.update_layout(title='Real-Time Query Volume and Response Times', xaxis_title='Time', yaxis_title='Volume/Response Time')
-#     return fig
-
-# app.layout = html.Div([
-#     dcc.Graph(id='query-data-graph'),
-#     dcc.Interval(
-#         id='interval-component',
-#         interval=30*1000,  # 30 seconds interval
-#         n_intervals=0
-#     )
-# ])
-
-
-
-
-# # Training Time and Database Fetch Time
-
-# from dash import Dash, html, dcc
-# import plotly.graph_objects as go
-# import pandas as pd
-# import sqlalchemy
-# from dash.dependencies import Input, Output, State
-
-# # Establish a connection to TiDB
-# engine = sqlalchemy.create_engine('mysql+pymysql://user:password@host/dbname')
-
-# app = Dash(__name__)
-
-# def fetch_training_data():
-#     query = """
-#     SELECT iteration, computation_time, fetch_time, data_volume
-#     FROM training_log
-#     ORDER BY iteration ASC
-#     """
-#     df = pd.read_sql(query, con=engine)
-#     return df
-
-# @app.callback(
-#     Output('training-time-graph', 'figure'),
-#     Input('update-button', 'n_clicks')
-# )
-# def update_training_graph(n_clicks):
-#     df = fetch_training_data()
-#     fig = go.Figure(data=[
-#         go.Bar(name='Computation Time', x=df['iteration'], y=df['computation_time'], hoverinfo='y'),
-#         go.Bar(name='Fetch Time', x=df['iteration'], y=df['fetch_time'], hoverinfo='y'),
-#         go.Bar(name='Data Volume (Rows)', x=df['iteration'], y=df['data_volume'], hoverinfo='y')
-#     ])
-#     fig.update_layout(barmode='stack', title='Training, Fetch Times, and Data Volume Per Iteration',
-#                       xaxis_title='Iteration', yaxis_title='Time (seconds) / Data Volume (Rows)')
-#     return fig
-
-# app.layout = html.Div([
-#     html.Button('Update Data', id='update-button', n_clicks=0),
-#     dcc.Graph(id='training-time-graph')
-# ])
-
-# if __name__ == '__main__':
-#     app.run_server(debug=True)
-
+@app.callback(
+    Output('response-emotion', 'children'),
+    Input('insert-emotion', 'n_clicks'),
+    state=[State('input-data', 'value')]
+)
+def handle_insert_emotion(n_clicks, data):
+    if n_clicks is None:
+        return ""
+    response = insert_emotion_cnn_ai_training({"data": data}, api_key)
+    return str(response)
 
 if __name__ == '__main__':
     # Dynamically bind to the port provided by Cloud Run

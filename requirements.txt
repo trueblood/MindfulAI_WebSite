@@ -3,3 +3,4 @@ pandas
 dash-bootstrap-components>=1.0.0b3
 openpyxl
 plotly
+requests
