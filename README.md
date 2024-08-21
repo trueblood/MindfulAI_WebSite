@@ -1,10 +1,10 @@
-# MindfulAI_FrontEnd
+# EmbraceAI_FrontEnd
 
-Welcome to the **MindfulAI_FrontEnd** application, a dynamic Dash website designed to interface with an AI backend for emotion recognition and mindfulness exercise recommendation. This front end serves as a crucial component of a larger system that includes convolutional neural networks (CNNs), encoding models, and reinforcement learning (RL) models.
+Welcome to the **EmbraceAI_FrontEnd** application, a dynamic Dash website designed to interface with an AI backend for emotion recognition and mindfulness exercise recommendation. This front end serves as a crucial component of a larger system that includes convolutional neural networks (CNNs), encoding models, and reinforcement learning (RL) models.
 
 ## Overview
 
-The **MindfulAI_FrontEnd** is part of our entry for the **TiDB Hackathon 2024**. It interacts with a sophisticated backend API that processes emotional data using CNN and encoding models to recommend mindfulness exercises via an RL model.
+The **EmbraceAI_FrontEnd** is part of our entry for the **TiDB Hackathon 2024**. It interacts with a sophisticated backend API that processes emotional data using CNN and encoding models to recommend mindfulness exercises via an RL model.
 
 ## Installation
 
