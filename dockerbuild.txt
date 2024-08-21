@@ -1,0 +1,23 @@
+embrace-ai-website
+
+###docker push us-central1-docker.pkg.dev/isentropic-tape-419722/embrace-ai-website/embrace-ai-website:latest 
+
+
+docker images
+
+## docker build -t embrace-ai-website:latest . this is old version, this image wil run on my mac
+
+docker buildx build --platform linux/amd64 -t embrace-ai-website:latest .
+
+docker tag embrace-ai-website:latest us-central1-docker.pkg.dev/isentropic-tape-419722/embrace-ai-website/embrace-ai-website:latest
+
+docker push us-central1-docker.pkg.dev/isentropic-tape-419722/embrace-ai-website/embrace-ai-website:latest
+
+#confirm they are uploaded correctly
+gcloud artifacts docker images list us-central1-docker.pkg.dev/isentropic-tape-419722/embrace-ai-website
+
+docker stop <container_id>
+docker ps ### gets container id
+
+docker run -p 8080:8080 embrace-ai-website
+
